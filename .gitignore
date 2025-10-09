@@ -41,3 +41,4 @@ build/
 
 # Ignore logs
 data/log/
+data/
