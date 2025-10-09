@@ -1,34 +1,11 @@
-version: '3.8'
 services:
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: my-sqlserver
+    build: .
+    container_name: sqlserver
     environment:
       SA_PASSWORD: "Sa123456!"
       ACCEPT_EULA: "Y"
     ports:
       - "1433:1433"
     volumes:
-      - ./data:/var/opt/mssql  # Lưu dữ liệu DB ra ngoài
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Import DB ban đầu
-    networks:
-      - mynetwork
-
-  app:
-    build: .
-    container_name: my-java-app
-    depends_on:
-      - sqlserver
-    environment:
-      DB_HOST: sqlserver
-      DB_PORT: 1433
-      DB_USER: sa
-      DB_PASS: Sa123456!
-    ports:
-      - "8080:8080"
-    networks:
-      - mynetwork
-
-networks:
-  mynetwork:
-    driver: bridge
+      - ./sql:/docker-entrypoint-initdb.d

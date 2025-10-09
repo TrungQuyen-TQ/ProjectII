@@ -12,6 +12,8 @@ target/
 *.iml
 *.ipr
 
+
+
 ### Eclipse ###
 .apt_generated
 .classpath
@@ -36,3 +38,7 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Ignore logs
+data/log/
+data/
