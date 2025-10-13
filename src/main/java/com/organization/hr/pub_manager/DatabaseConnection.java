@@ -8,7 +8,7 @@ public class DatabaseConnection {
     // ⚡ Thông tin kết nối SQL Server
     private static final String URL =
             "jdbc:sqlserver://localhost:1433;"   // server + port
-                    + "databaseName=master;"      // 👉 tạm thời dùng master, sau tạo DB thì đổi
+                    + "databaseName=HRManagement;"      // 👉 tạm thời dùng master, sau tạo DB thì đổi
                     + "encrypt=true;"
                     + "trustServerCertificate=true;";
     private static final String USER = "sa";             // user mặc định
@@ -23,10 +23,12 @@ public class DatabaseConnection {
         try (Connection conn = getConnection()) {
             if (conn != null) {
                 System.out.println("✅ Kết nối SQL Server thành công!");
+                System.out.println("✅ Connected to: " + conn.getCatalog());
             }
         } catch (SQLException e) {
             System.out.println("❌ Kết nối thất bại!");
             e.printStackTrace();
         }
+
     }
 }
