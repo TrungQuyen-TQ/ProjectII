@@ -3,6 +3,7 @@
 <?import java.lang.String?>
 <?import javafx.collections.FXCollections?>
 <?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
@@ -13,22 +14,18 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.geometry.Pos?>
-<?import javafx.scene.layout.StackPane?>
 
-
-
-
-<BorderPane styleClass="parent" stylesheets="@css/Style.css" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.organization.hr.pub_manager.HelloController">
+<BorderPane styleClass="parent" stylesheets="@css/Style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.organization.hr.pub_manager.HelloController">
 
     <!-- Thanh top -->
     <top>
         <AnchorPane prefHeight="700.0" prefWidth="1080.0" styleClass="topbar" BorderPane.alignment="CENTER">
             <children>
                 <!-- Nút Bàn làm việc -->
-                <Button layoutX="12.0" layoutY="14.0" mnemonicParsing="false" styleClass="btn_menu" text="Bàn làm việc" translateY="5.0">
+                <Button layoutX="243.0" layoutY="20.0" mnemonicParsing="false" styleClass="btn_menu" text="Bàn làm việc" translateY="5.0">
                     <graphic>
                         <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
                             <image>
@@ -42,7 +39,7 @@
                 </Button>
 
                 <!-- Nút Thực đơn -->
-                <Button layoutX="142.0" layoutY="14.0" mnemonicParsing="false" prefHeight="41.0" prefWidth="129.0" styleClass="btn_menu" text="Thực đơn" translateY="5.0">
+                <Button layoutX="373.0" layoutY="20.0" mnemonicParsing="false" prefHeight="41.0" prefWidth="129.0" styleClass="btn_menu" text="Thực đơn" translateY="5.0">
                     <graphic>
                         <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
                             <image>
@@ -56,22 +53,22 @@
                 </Button>
 
                 <!-- Ô tìm kiếm -->
-                <ImageView fitHeight="16" fitWidth="16" layoutX="312.0" layoutY="28.0" preserveRatio="true" translateY="-3.0">
+                <ImageView fitHeight="16" fitWidth="16" layoutX="654.0" layoutY="28.0" preserveRatio="true" translateY="-3.0">
                     <image>
                         <Image url="@icons/magnifying-glass.png" />
                     </image>
                 </ImageView>
 
-                <TextField layoutX="333.0" layoutY="22.0" promptText="Tìm kiếm mục (F:)" translateY="-3.0" />
+                <TextField layoutX="685.0" layoutY="23.0" promptText="Tìm kiếm mục (F:)" translateY="-3.0" />
 
-                <Button layoutX="538.0" layoutY="23.0" styleClass="btn_circle" translateY="-7.0">
-                    <graphic>
-                        <ImageView fitHeight="20" fitWidth="20" preserveRatio="true" translateY="1.0">
+                <Button layoutX="903.0" layoutY="24.0" styleClass="btn_circle" translateY="-7.0">
+               <graphic>
+                        <ImageView fitHeight="20" fitWidth="20" preserveRatio="true">
                             <image>
                                 <Image url="@icons/flash.png" />
                             </image>
                         </ImageView>
-                    </graphic>
+               </graphic>
                 </Button>
             </children>
         </AnchorPane>
@@ -126,14 +123,14 @@
                 <!-- Nút chọn phòng -->
                 <Button text="Phòng VIP 8 / P...">
                     <styleClass>
-                        <String fx:value="btn-action"/>
-                        <String fx:value="btn-round"/>
-                        <String fx:value="btn-sophong"/>
+                        <String fx:value="btn-action" />
+                        <String fx:value="btn-round" />
+                        <String fx:value="btn-sophong" />
                     </styleClass>
                     <graphic>
                         <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
                             <image>
-                                <Image url="@icons/table.png"/>
+                                <Image url="@icons/table.png" />
                             </image>
                         </ImageView>
                     </graphic>
@@ -144,18 +141,18 @@
                 <StackPane>
                     <TextField promptText="Tìm khách hàng (F4)">
                         <styleClass>
-                            <String fx:value="btn-action"/>
-                            <String fx:value="search-field"/>
+                            <String fx:value="btn-action" />
+                            <String fx:value="search-field" />
                         </styleClass>
                     </TextField>
 
                     <Button text="+">
                         <styleClass>
-                            <String fx:value="btn-add"/>
-                            <String fx:value="btn-round"/>
+                            <String fx:value="btn-add" />
+                            <String fx:value="btn-round" />
                         </styleClass>
                         <StackPane.alignment>
-                            <Pos fx:constant="CENTER_RIGHT"/>
+                            <Pos fx:constant="CENTER_RIGHT" />
                         </StackPane.alignment>
                     </Button>
                 </StackPane>
@@ -167,13 +164,13 @@
                 <!-- ComboBox bảng giá -->
                 <ComboBox>
                     <styleClass>
-                        <String fx:value="btn-action"/>
-                        <String fx:value="combo-price"/>
+                        <String fx:value="btn-action" />
+                        <String fx:value="combo-price" />
                     </styleClass>
                     <items>
                         <FXCollections fx:factory="observableArrayList">
-                            <String fx:value="Bảng giá chung"/>
-                            <String fx:value="Bảng giá VIP"/>
+                            <String fx:value="Bảng giá chung" />
+                            <String fx:value="Bảng giá VIP" />
                         </FXCollections>
                     </items>
                 </ComboBox>
@@ -181,13 +178,13 @@
                 <!-- Nút giỏ hàng -->
                 <Button>
                     <styleClass>
-                        <String fx:value="btn-action"/>
-                        <String fx:value="btn-cart"/>
+                        <String fx:value="btn-action" />
+                        <String fx:value="btn-cart" />
                     </styleClass>
                     <graphic>
                         <ImageView fitHeight="18" fitWidth="18" preserveRatio="true">
                             <image>
-                                <Image url="@icons/cart.png"/>
+                                <Image url="@icons/cart.png" />
                             </image>
                         </ImageView>
                     </graphic>
