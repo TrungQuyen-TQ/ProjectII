@@ -1,10 +1,17 @@
 #!/bin/bash
-/opt/mssql/bin/sqlservr &
+set -e
 
-# Chờ SQL Server start
-sleep 20s
+echo "⏳ Đang khởi động MySQL..."
+docker-entrypoint.sh mysqld &
 
-# Import script
-/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "Sa123456!" -i /docker-entrypoint-initdb.d/init.sql
+# Đợi MySQL sẵn sàng
+until mysqladmin ping -h "localhost" --silent; do
+  echo "⏳ Chờ MySQL khởi động..."
+  sleep 2
+done
+
+echo "✅ MySQL đã khởi động, tiến hành import dữ liệu..."
+mysql -u root -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DATABASE}" < /docker-entrypoint-initdb.d/init.sql || true
 
 wait
+
