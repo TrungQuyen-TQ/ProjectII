@@ -1,11 +1,13 @@
 services:
-  sqlserver:
+  mysql:
     build: .
-    container_name: sqlserver
+    container_name: mysql
     environment:
-      SA_PASSWORD: "Sa123456!"
-      ACCEPT_EULA: "Y"
+      MYSQL_ROOT_PASSWORD: "root123!"
+      MYSQL_DATABASE: "mydb"
+      MYSQL_USER: "appuser"
+      MYSQL_PASSWORD: "app123!"
     ports:
-      - "1433:1433"
+      - "3306:3306"
     volumes:
       - ./sql:/docker-entrypoint-initdb.d
