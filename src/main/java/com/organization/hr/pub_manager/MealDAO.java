@@ -6,27 +6,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MealDAO {
-//    Trả về một danh sách (List) các món ăn (Meal).
-//    Mục tiêu: Lấy tất cả món ăn từ bảng meals.
+
     public List<Meal> getAllMeals(){
-
-//        Tạo một danh sách trống để chứa các món ăn lấy từ database.
         List<Meal> meals = new ArrayList<>();
-
-//        Câu SQL này lấy ba cột (id, name, price) từ bảng meals.
         String query = "SELECT id, name, price, image_path FROM meals";
 
-//        Kết nối tới database và thực thi truy vấn
-//        Connection: kết nối tới database.
-//→ DatabaseConnection.getConnection() là hàm khác (do em hoặc hệ thống viết) để mở kết nối.
-//
-//        Statement: dùng để thực thi câu lệnh SQL.
-//                ResultSet: chứa kết quả truy vấn (giống như bảng dữ liệu tạm thời trong Java).
-//✅ Lưu ý:
-//        Khối try (...) { ... } ở đây dùng try-with-resources, giúp tự động đóng kết nối sau khi xong việc (rất tốt về hiệu năng và tránh lỗi rò rỉ tài nguyên).
         try (Connection conn = DatabaseConnection.getConnection();
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(query)){
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)){
             while (rs.next()) {
                 meals.add(new Meal(
                         rs.getInt("id"),
@@ -39,16 +26,52 @@ public class MealDAO {
             e.printStackTrace();
         }
         return meals;
-//        rs.next() di chuyển con trỏ đến dòng kế tiếp trong kết quả truy vấn.
-//                rs.getInt("id"), rs.getString("name"), rs.getDouble("price") → lấy giá trị từ cột tương ứng.
-//                new Meal(...) → tạo đối tượng Meal từ các giá trị đó.
-//                meals.add(meal) → thêm món ăn vừa tạo vào danh sách.
-
-//        Tóm tắt để ghi nhớ
-//        MealDAO là lớp “trung gian” giúp chương trình Java nói chuyện với database.
-//        Phương thức getAllMeals() mở kết nối → chạy câu SQL → đọc kết quả → tạo đối tượng Meal → trả về danh sách món ăn.
-
     }
+
+
+    /**
+     * Lấy danh sách món ăn theo tên danh mục, sử dụng JOIN với bảng categories.
+     * @param categoryName Tên danh mục ("All" để lấy tất cả).
+     */
+    public List<Meal> getMealsByCategory(String categoryName) {
+        List<Meal> meals = new ArrayList<>();
+        String sql;
+
+        if ("All".equalsIgnoreCase(categoryName)) {
+            // Lấy tất cả món ăn
+            sql = "SELECT m.id, m.name, m.price, m.image_path FROM meals m";
+        } else {
+            // JOIN meals (m) với categories (c) và lọc theo tên danh mục (c.name)
+            sql = "SELECT m.id, m.name, m.price, m.image_path " +
+                    "FROM meals m JOIN categories c ON m.category_id = c.id " +
+                    "WHERE c.name = ?";
+        }
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            // Thiết lập tham số chỉ khi không phải là "All"
+            if (!"All".equalsIgnoreCase(categoryName)) {
+                ps.setString(1, categoryName);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    meals.add(new Meal(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getDouble("price"),
+                            rs.getString("image_path")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi truy vấn món ăn theo danh mục: " + categoryName);
+            e.printStackTrace();
+        }
+        return meals;
+    }
+
 
     public void updateMealImage(int id, String imagePath) {
         String sql = "UPDATE meals SET image_path = ? WHERE id = ?";
