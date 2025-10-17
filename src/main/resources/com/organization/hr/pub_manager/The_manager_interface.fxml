@@ -84,9 +84,9 @@
             <Button styleClass="btn_category" text="Bia &amp; Thuốc lá" />
             <Button styleClass="btn_category" text="Bún bò Huế" />
             <Button styleClass="btn_category" text="Cocktail cổ điển" />
-         <BorderPane.margin>
-            <Insets right="7.0" />
-         </BorderPane.margin>
+            <BorderPane.margin>
+                <Insets right="7.0" />
+            </BorderPane.margin>
         </VBox>
     </left>
 
@@ -179,15 +179,46 @@
             </HBox>
 
 
-            <TableView fx:id="cartTable" />
+            <TableView fx:id="cartTable" VBox.vgrow="ALWAYS" /> <!-- THAY ĐỔI: Thêm VBox.vgrow="ALWAYS" -->
+
+            <!-- THAY ĐỔI MỚI: BẢNG TÓM TẮT TÍNH TIỀN -->
+            <VBox spacing="5" styleClass="summary-box">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Tổng tiền món:" styleClass="summary-label" HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="lblSubTotal" text="0đ" styleClass="summary-value"/>
+                </HBox>
+
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Giảm giá (%/đ):" styleClass="summary-label" HBox.hgrow="ALWAYS"/>
+                    <TextField fx:id="txtDiscount" text="0" promptText="Nhập % hoặc số tiền" prefWidth="100" styleClass="summary-input"/>
+                </HBox>
+
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Phí dịch vụ (đ):" styleClass="summary-label" HBox.hgrow="ALWAYS"/>
+                    <TextField fx:id="txtServiceFee" text="0" promptText="Nhập số tiền" prefWidth="100" styleClass="summary-input"/>
+                </HBox>
+
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Thuế (VAT %/đ):" styleClass="summary-label" HBox.hgrow="ALWAYS"/>
+                    <TextField fx:id="txtTax" text="0" promptText="Nhập % hoặc số tiền" prefWidth="100" styleClass="summary-input"/>
+                </HBox>
+
+                <!-- Dòng TỔNG CỘNG LỚN -->
+                <HBox alignment="CENTER_LEFT" spacing="10" styleClass="grand-total-row">
+                    <Label text="TỔNG THANH TOÁN:" styleClass="grand-total-label" HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="lblGrandTotal" text="0đ" styleClass="grand-total-value"/>
+                </HBox>
+            </VBox>
+
+            <!-- Nút Tạm tính/Thanh toán (di chuyển xuống dưới bảng tóm tắt) -->
             <HBox spacing="10">
-                <Button text="Trong tạm tính" />
-                <Button styleClass="btn-pay" text="Thanh toán (F9)" />
+                <Button text="Trong tạm tính" onAction="#handleSaveOrder" />
+                <Button styleClass="btn-pay" text="Thanh toán (F9)" onAction="#handleCheckout" />
                 <Button styleClass="btn-alert" text="Thông báo (F10)" />
             </HBox>
-         <BorderPane.margin>
-            <Insets left="7.0" />
-         </BorderPane.margin>
+            <BorderPane.margin>
+                <Insets left="7.0" />
+            </BorderPane.margin>
         </VBox>
     </right>
 
