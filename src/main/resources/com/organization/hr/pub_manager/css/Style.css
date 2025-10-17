@@ -128,7 +128,7 @@
     -fx-background-radius: 15;
     -fx-padding: 15;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0.0, -2, 0); /* Shadow bên trái */
-    -fx-pref-width: 450px; /* Đặt chiều rộng cố định */
+    -fx-pref-width: 550px; /* Đặt chiều rộng cố định */
 }
 
 .top-action-bar {

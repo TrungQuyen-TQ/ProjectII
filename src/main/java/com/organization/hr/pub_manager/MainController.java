@@ -19,24 +19,21 @@ import javafx.beans.value.ChangeListener; // Import cho change listener
 import java.net.URL;
 import java.util.List;
 import java.util.Optional; // Import cho Optional và ButtonType
+import javafx.event.ActionEvent; // <<< ĐÃ THÊM IMPORT NÀY
 
 public class MainController {
-    //    @FXML dùng để liên kết biến này với phần tử trong file FXML (ví dụ MainView.fxml).
-//menuGrid là một lưới (TilePane) — nơi các “thẻ món ăn” (card) sẽ được thêm vào để hiển thị.
+
     @FXML
     private TilePane menuGrid;
 
-    // LIÊN KẾT: Liên kết với TableView giỏ hàng trong FXML
     @FXML
     private TableView<OrderItem> cartTable;
 
-    // FXML MỚI: Liên kết các thành phần tóm tắt giỏ hàng
     @FXML private Label lblSubTotal;
     @FXML private TextField txtDiscount;
     @FXML private TextField txtServiceFee;
     @FXML private TextField txtTax;
     @FXML private Label lblGrandTotal;
-
 
     //    Tạo một đối tượng DAO để lấy dữ liệu từ database.
     private final MealDAO mealDao = new MealDAO();
@@ -180,28 +177,54 @@ public class MainController {
         txtTax.textProperty().addListener(summaryListener);
 
 
-        loadMeals();
+        // <<< THAY ĐỔI 1: Tải tất cả món ăn khi khởi động
+        loadMeals("All");
         updateCartSummary(); // Khởi tạo tóm tắt khi tải ứng dụng
     }
 
+    // === PHƯƠNG THỨC LỌC DANH MỤC (MỚI) ===
+    /**
+     * Xử lý sự kiện khi người dùng bấm vào các nút danh mục.
+     * Được liên kết với onAction="#handleCategorySelection" trong FXML.
+     */
+    // Trong MainController.java
+    @FXML
+    private void handleCategorySelection(ActionEvent event) {
+        Button clickedButton = (Button) event.getSource();
+        String categoryName = clickedButton.getText();
+
+        // Loại bỏ ký tự xuống dòng (\n) và khoảng trắng đầu/cuối.
+        // Giữ nguyên ký tự '&' và dấu cách vì nó có trong tên DB: 'Đồ uống & Thuốc lá'
+        categoryName = categoryName.replace("\n", "").trim();
+
+        // Nếu bạn muốn kiểm tra, thêm dòng này:
+        // System.out.println("DEBUG: Lọc theo danh mục: [" + categoryName + "]");
+
+        loadMeals(categoryName);
+    }
+    // =====================================
 
     //    Có thể được gắn vào nút “Làm mới” trong giao diện.
     @FXML
     public void reloadMeals() {
-        loadMeals();
+        // <<< THAY ĐỔI 2: Tải lại tất cả món ăn khi làm mới
+        loadMeals("All");
     }
 
 
-    private void loadMeals() {
-        System.out.println("🟡 loadMeals() called...");
+    /**
+     * Tải và hiển thị món ăn lên menuGrid, có hỗ trợ lọc theo danh mục.
+     * @param category Tên danh mục cần lọc. Truyền "All" để hiển thị tất cả.
+     */
+    private void loadMeals(String category) {
+        System.out.println("🟡 loadMeals() called. Category: " + category);
         menuGrid.getChildren().clear();
 
         new Thread(() -> {
-            List<Meal> meals = mealDao.getAllMeals();
-            System.out.println("🟢 Số lượng món lấy được: " + meals.size());
-            for (Meal m : meals) {
-                System.out.println(" - " + m.getName() + " | " + m.getPrice() + " | " + m.getImagePath());
-            }
+            // <<< THAY ĐỔI 3: Sử dụng DAO để lọc trực tiếp trên database
+            List<Meal> meals = mealDao.getMealsByCategory(category);
+
+            System.out.println("🟢 Số lượng món sau khi lọc: " + meals.size());
 
             Platform.runLater(() -> {
                 for (Meal meal : meals) {
@@ -211,7 +234,7 @@ public class MainController {
         }).start();
     }
 
-    // === PHƯƠNG THỨC TIỆN ÍCH TẢI ẢNH ===
+    // === PHƯƠNG THỨC TIỆN ÍCH TẢI ẢNH (Giữ nguyên) ===
     private Image loadImageFromPath(String relativePath) {
         try {
             String path = relativePath.replace("\\", "/");
@@ -230,7 +253,7 @@ public class MainController {
     }
 
 
-    // === LOGIC THÊM MÓN VÀO GIỎ HÀNG ===
+    // === LOGIC THÊM MÓN VÀO GIỎ HÀNG (Giữ nguyên) ===
     private void addToCart(Meal meal) {
         ObservableList<OrderItem> items = cartTable.getItems();
         boolean found = false;
@@ -259,7 +282,7 @@ public class MainController {
     }
 
 
-    // === Tạo thẻ món ăn ===
+    // === Tạo thẻ món ăn (Giữ nguyên) ===
     private VBox createMealCard(Meal meal) {
         Image img = loadImageFromPath(meal.getImagePath());
 
@@ -296,6 +319,7 @@ public class MainController {
         );
         File file = fileChooser.showOpenDialog(new Stage());
         if (file != null) {
+            // Ở đây bạn có thể muốn lưu đường dẫn tương đối thay vì tuyệt đối (file.getAbsolutePath())
             mealDao.updateMealImage(meal.getId(), file.getAbsolutePath());
             reloadMeals();
 
@@ -306,14 +330,13 @@ public class MainController {
         }
     }
 
-    // === LOGIC MỚI: TÍNH TOÁN VÀ CẬP NHẬT TÓM TẮT GIỎ HÀNG (ĐÃ TỐI ƯU) ===
+    // === LOGIC MỚI: TÍNH TOÁN VÀ CẬP NHẬT TÓM TẮT GIỎ HÀNG (Giữ nguyên) ===
     private void updateCartSummary() {
         double subTotal = cartTable.getItems().stream()
                 .mapToDouble(OrderItem::getTotal)
                 .sum();
 
         // --- 1. Lấy giá trị từ TextFields (Giảm giá, Phí dịch vụ, Thuế) ---
-        // SỬ DỤNG HÀM parseSummaryValue ĐỂ XỬ LÝ KÝ TỰ % VÀ SỐ TIỀN
         double discount = parseSummaryValue(txtDiscount.getText(), subTotal);
         double serviceFee = parseNumericValue(txtServiceFee.getText());
         double tax = parseSummaryValue(txtTax.getText(), subTotal);
@@ -354,7 +377,7 @@ public class MainController {
         }
     }
 
-    // Hàm tiện ích chỉ chuyển đổi số tuyệt đối (Dùng cho Phí dịch vụ vì thường không phải %)
+    // Hàm tiện ích chỉ chuyển đổi số tuyệt đối
     private double parseNumericValue(String input) {
         if (input == null || input.trim().isEmpty()) {
             return 0.0;
@@ -369,7 +392,7 @@ public class MainController {
     }
 
 
-    // === CHỨC NĂNG TẠM TÍNH (LƯU ĐƠN HÀNG) ===
+    // === CHỨC NĂNG TẠM TÍNH (LƯU ĐƠN HÀNG) (Giữ nguyên) ===
     @FXML
     public void handleSaveOrder() {
         if (cartTable.getItems().isEmpty()) {
@@ -388,7 +411,7 @@ public class MainController {
     }
 
 
-    // === CHỨC NĂNG THANH TOÁN (KẾT THÚC GIAO DỊCH) ===
+    // === CHỨC NĂNG THANH TOÁN (KẾT THÚC GIAO DỊCH) (Giữ nguyên) ===
     @FXML
     public void handleCheckout() {
         if (cartTable.getItems().isEmpty()) {
@@ -407,7 +430,7 @@ public class MainController {
     }
 
 
-    // === PHƯƠNG THỨC TIỆN ÍCH CHO ALERT ===
+    // === PHƯƠNG THỨC TIỆN ÍCH CHO ALERT (Giữ nguyên) ===
     private void showActionAlert(Alert.AlertType type, String title, String header, String content) {
         Alert alert = new Alert(type);
         alert.setTitle(title);

@@ -5,6 +5,7 @@ public class Meal {
     private String name;
     private double price;
     private String imagePath;
+    private int categoryId; // Khóa ngoại mới
 
     public Meal() {
     }
@@ -24,6 +25,8 @@ public class Meal {
 
     public String getImagePath() { return imagePath; }
 
+    public int getCategoryId() { return categoryId; }
+
     public void setId(int id) {this.id = id;}
 
     public void setName(String name) {this.name = name;}
@@ -31,4 +34,7 @@ public class Meal {
     public void setPrice(double price) {this.price = price;}
 
     public void setImagePath(String imagePath) { this.imagePath = imagePath; }
+
+    // Thêm getter/setter cho categoryId
+    public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
 }
