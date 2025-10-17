@@ -1,8 +1,8 @@
 package com.organization.hr.pub_manager;
-import com.organization.hr.pub_manager.MealDAO;
-import com.organization.hr.pub_manager.Meal;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.TilePane;
@@ -12,50 +12,65 @@ import javafx.geometry.Pos;
 import java.io.File;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.scene.control.Alert;
-import java.net.URL;
+import javafx.scene.input.MouseButton;
 
+import java.net.URL;
 import java.util.List;
 
 public class MainController {
-//    @FXML dùng để liên kết biến này với phần tử trong file FXML (ví dụ MainView.fxml).
+    //    @FXML dùng để liên kết biến này với phần tử trong file FXML (ví dụ MainView.fxml).
 //menuGrid là một lưới (TilePane) — nơi các “thẻ món ăn” (card) sẽ được thêm vào để hiển thị.
-//🧠 Hình dung:
-//menuGrid giống như một khay đựng nhiều món ăn trên màn hình.
     @FXML
     private TilePane menuGrid;
 
-//    Tạo một đối tượng DAO để lấy dữ liệu từ database.
+    // LIÊN KẾT MỚI: Liên kết với TableView giỏ hàng trong FXML
+    @FXML
+    private TableView<OrderItem> cartTable;
+
+
+    //    Tạo một đối tượng DAO để lấy dữ liệu từ database.
 //Mỗi khi cần danh sách món ăn → gọi mealDAO.getAllMeals().
     private final MealDAO mealDao = new MealDAO();
 
-//    Phương thức này tự động được gọi khi giao diện FXML được tải.
-//    Nó gọi loadMeals() để hiển thị danh sách món ăn ngay khi mở chương trình.
-//    📍Ví dụ: Khi người dùng mở app “Menu quán ăn”, phần initialize() này sẽ lo tải và vẽ danh sách món lên ngay.
-@FXML
-public void initialize() {
-    System.out.println("🟢 initialize() in MainController is running...");
-    loadMeals();
-}
+    //    Phương thức này tự động được gọi khi giao diện FXML được tải.
+    @FXML
+    public void initialize() {
+        System.out.println("🟢 initialize() in MainController is running...");
+
+        // === BƯỚC MỚI: CẤU HÌNH CÁC CỘT CHO GIỎ HÀNG (cartTable) ===
+        // 1. Cột Tên món
+        TableColumn<OrderItem, String> nameCol = new TableColumn<>("Tên món");
+        // "name" phải khớp với tên thuộc tính trong OrderItem (getName())
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+        nameCol.setPrefWidth(120);
+
+        // 2. Cột Số lượng
+        TableColumn<OrderItem, Integer> quantityCol = new TableColumn<>("SL");
+        quantityCol.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        quantityCol.setPrefWidth(50);
+        quantityCol.setStyle("-fx-alignment: CENTER;");
+
+        // 3. Cột Tổng tiền
+        TableColumn<OrderItem, Double> totalCol = new TableColumn<>("Tổng tiền");
+        totalCol.setCellValueFactory(new PropertyValueFactory<>("total"));
+        totalCol.setPrefWidth(100);
+        totalCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+        // Format giá trị hiển thị (tùy chọn)
+
+        // Thêm các cột vào TableView (xóa cột mặc định nếu có)
+        cartTable.getColumns().clear();
+        cartTable.getColumns().addAll(nameCol, quantityCol, totalCol);
+
+        loadMeals();
+    }
 
 
-//    Có thể được gắn vào nút “Làm mới” trong giao diện.
-//    Khi người dùng nhấn nút đó → gọi lại loadMeals() để cập nhật danh sách món mới nhất.
+    //    Có thể được gắn vào nút “Làm mới” trong giao diện.
     @FXML
     public void reloadMeals() {
         loadMeals();
     }
 
-//    Đây là phần cốt lõi:
-//            menuGrid.getChildren().clear();
-//→ Xóa hết món cũ khỏi giao diện (để tránh trùng lặp khi tải lại).
-//            new Thread(() -> { ... }).start();
-//→ Tải dữ liệu trong luồng riêng (background thread) → tránh “đơ giao diện”.
-//            Platform.runLater(() -> { ... });
-//→ Khi có dữ liệu, quay lại luồng giao diện (UI thread) để vẽ các món ăn lên màn hình.
-//            🧠 Nói nôm na:
-//            “Dữ liệu được nấu trong bếp (thread nền),
-//    rồi bưng ra bàn (UI) bằng người phục vụ Platform.runLater()”.
 
     private void loadMeals() {
         System.out.println("🟡 loadMeals() called...");
@@ -77,6 +92,36 @@ public void initialize() {
     }
 
 
+    // === LOGIC MỚI: Thêm món vào giỏ hàng ===
+    private void addToCart(Meal meal) {
+        ObservableList<OrderItem> items = cartTable.getItems();
+        boolean found = false;
+
+        // 1. Kiểm tra xem món ăn đã có trong giỏ chưa
+        for (OrderItem item : items) {
+            // Dùng tên món để so sánh đơn giản
+            if (item.getName().equals(meal.getName())) {
+                // 2. Nếu tìm thấy: Tăng số lượng lên 1
+                item.setQuantity(item.getQuantity() + 1);
+                // Cần gọi cartTable.refresh() để buộc TableView cập nhật lại dữ liệu/tổng tiền
+                cartTable.refresh();
+                found = true;
+                System.out.println("✔️ Đã tăng số lượng món: " + meal.getName());
+                break;
+            }
+        }
+
+        // 3. Nếu không tìm thấy: Thêm món mới vào giỏ hàng
+        if (!found) {
+            OrderItem newItem = new OrderItem(meal.getName(), meal.getPrice(), 1);
+            items.add(newItem);
+            System.out.println("➕ Đã thêm món mới: " + meal.getName());
+        }
+
+        // Tự động cuộn xuống cuối bảng (tùy chọn)
+        cartTable.scrollTo(items.size() - 1);
+    }
+
 
     // === Tạo thẻ món ăn ===
     private VBox createMealCard(Meal meal) {
@@ -88,15 +133,14 @@ public void initialize() {
             URL imageUrl = getClass().getResource("/com/organization/hr/pub_manager" + path);
             if (imageUrl == null) {
                 System.out.println("⚠️ Không tìm thấy ảnh: " + path + " → dùng default.png");
-                imageUrl = getClass().getResource("/com/organization/hr/pub_manager/icons/default.png");
+                imageUrl = getClass().getResource("/com/organization/hr/pub_manager/images/default.png");
             }
 
             img = new Image(imageUrl.toExternalForm());
         } catch (Exception e) {
             e.printStackTrace();
-            img = new Image(getClass().getResource("/com/organization/hr/pub_manager/icons/default.png").toExternalForm());
+            img = new Image(getClass().getResource("/com/organization/hr/pub_manager/images/default.png").toExternalForm());
         }
-
 
 
         ImageView imageView = new ImageView(img);
@@ -112,8 +156,16 @@ public void initialize() {
         box.setAlignment(Pos.CENTER);
         box.getStyleClass().add("menu-item");
 
-        // Khi click vào món => chọn ảnh mới
-        box.setOnMouseClicked(e -> changeMealImage(meal));
+        // THAY ĐỔI LOGIC CLICK:
+        // Click chuột TRÁI (PRIMARY) -> Thêm vào giỏ hàng
+        // Click chuột PHẢI (SECONDARY) -> Đổi ảnh (giữ lại chức năng cũ)
+        box.setOnMouseClicked(e -> {
+            if (e.getButton() == MouseButton.PRIMARY) {
+                addToCart(meal);
+            } else if (e.getButton() == MouseButton.SECONDARY) {
+                changeMealImage(meal);
+            }
+        });
 
         return box;
     }
@@ -135,7 +187,6 @@ public void initialize() {
             alert.showAndWait();
         }
     }
-
 
 
 }

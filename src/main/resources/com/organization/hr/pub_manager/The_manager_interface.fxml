@@ -96,27 +96,9 @@
         <TilePane fx:id="menuGrid" hgap="15" vgap="15" prefColumns="4" styleClass="menu-grid">
         </TilePane>
 
-        <!--            <children>-->
-<!--                <VBox alignment="CENTER" spacing="5" styleClass="menu-item">-->
-<!--                    <ImageView fitHeight="80" fitWidth="80" preserveRatio="true">-->
-<!--                        <image>-->
-<!--                            <Image url="@icons/beer.png" />-->
-<!--                        </image>-->
-<!--                    </ImageView>-->
-<!--                    <Label text="Bia Tiger" />-->
-<!--                    <Label styleClass="price" text="20,000đ" />-->
-<!--                </VBox>-->
 
-<!--                <VBox alignment="CENTER" spacing="5" styleClass="menu-item">-->
-<!--                    <ImageView fitHeight="80" fitWidth="80" preserveRatio="true">-->
-<!--                        <image>-->
-<!--                            <Image url="@icons/noodles.png" />-->
-<!--                        </image>-->
-<!--                    </ImageView>-->
-<!--                    <Label text="Bún bò Huế" />-->
-<!--                    <Label styleClass="price" text="35,000đ" />-->
-<!--                </VBox>-->
-<!--            </children>-->
+
+
     </center>
 
     <!-- Bên phải: giỏ hàng -->
