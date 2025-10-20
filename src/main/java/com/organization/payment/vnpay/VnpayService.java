@@ -1,38 +1,94 @@
 package com.organization.payment.vnpay;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import com.google.gson.Gson;
+import java.io.IOException;
 
 public class VnpayService {
 
-    public static String generatePaymentUrl(String orderId, long amount, String orderInfo) throws Exception {
-        Map<String, String> params = new TreeMap<>();
-        params.put("vnp_Version", "2.1.0");
-        params.put("vnp_Command", "pay");
-        params.put("vnp_TmnCode", VnpayConfig.TMN_CODE);
-        params.put("vnp_Amount", String.valueOf(amount * 100)); // nhân 100 theo quy định VNPAY
-        params.put("vnp_CurrCode", "VND");
-        params.put("vnp_TxnRef", orderId);
-        params.put("vnp_OrderInfo", orderInfo);
-        params.put("vnp_OrderType", "other");
-        params.put("vnp_Locale", "vn");
-        params.put("vnp_ReturnUrl", VnpayConfig.RETURN_URL);
-        params.put("vnp_IpAddr", "127.0.0.1");
-        params.put("vnp_CreateDate", new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+    // ĐỊA CHỈ API CỦA BACKEND NEXT.JS (SỬ DỤNG CỔNG 8888)
+    private static final String CREATE_PAYMENT_URL = "http://localhost:8888/order/create_payment_url";
+    private static final String QUERY_DR_URL = "http://localhost:8888/order/querydr";
 
-        // Bước 2: Tạo chuỗi query
-        StringBuilder query = new StringBuilder();
-        for (Map.Entry<String, String> entry : params.entrySet()) {
-            if (query.length() > 0) query.append("&");
-            query.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8))
-                    .append("=")
-                    .append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final Gson gson = new Gson();
+
+    // --- Cấu trúc dữ liệu cho Request/Response ---
+
+    // JSON Request gửi đến /order/create_payment_url
+    private static class CreatePaymentRequest {
+        long amount;
+        String orderId;
+        String orderInfo;
+        String bankCode = "NCB"; // Hoặc Bank Code mặc định khác
+        String language = "vn";
+    }
+
+    // JSON Response từ /order/create_payment_url
+    private static class PaymentResponse {
+        String paymentUrl;
+        String message;
+    }
+
+    // JSON Response từ /order/querydr
+    private static class QueryResponse {
+        String status; // Ví dụ: 'PAID', 'PENDING', 'FAILED'
+        // Bạn có thể thêm các trường khác như vnp_ResponseCode, vnp_TransactionStatus nếu Backend trả về
+    }
+
+    /**
+     * Gửi yêu cầu đến Backend để lấy URL thanh toán VNPAY
+     */
+    public String createPaymentUrl(long amount, String orderId, String orderInfo) throws IOException, InterruptedException, RuntimeException {
+        CreatePaymentRequest requestBody = new CreatePaymentRequest();
+        requestBody.amount = amount;
+        requestBody.orderId = orderId;
+        requestBody.orderInfo = orderInfo;
+
+        String jsonInput = gson.toJson(requestBody);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(CREATE_PAYMENT_URL))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonInput))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 200) {
+            PaymentResponse resObject = gson.fromJson(response.body(), PaymentResponse.class);
+            if ("OK".equals(resObject.message) && resObject.paymentUrl != null) {
+                return resObject.paymentUrl;
+            } else {
+                throw new RuntimeException("Backend returned error: " + resObject.message);
+            }
+        } else {
+            throw new RuntimeException("HTTP Error " + response.statusCode() + " from Backend.");
         }
+    }
 
-        String hashData = query.toString() + VnpayConfig.HASH_SECRET; // (demo đơn giản)
-        String vnp_SecureHash = Integer.toHexString(hashData.hashCode());
+    /**
+     * Gửi yêu cầu Polling đến Backend để kiểm tra trạng thái giao dịch
+     */
+    public String checkPaymentStatus(String orderId) throws IOException, InterruptedException {
+        // Cấu trúc querydr request của bạn là POST và cần orderId
+        String jsonInput = String.format("{\"orderId\": \"%s\"}", orderId);
 
-        return VnpayConfig.VNP_URL + "?" + query + "&vnp_SecureHash=" + vnp_SecureHash;
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(QUERY_DR_URL))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonInput))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 200) {
+            QueryResponse resObject = gson.fromJson(response.body(), QueryResponse.class);
+            return resObject.status;
+        }
+        return "ERROR"; // Trả về lỗi nếu không kết nối được
     }
 }

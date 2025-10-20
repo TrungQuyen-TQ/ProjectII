@@ -104,121 +104,24 @@
 
     </center>
 
-    <!-- Bên phải: giỏ hàng -->
     <right>
         <VBox prefHeight="740.0" prefWidth="671.0" spacing="10" styleClass="cart-box">
             <HBox alignment="CENTER_LEFT" spacing="10" styleClass="top-action-bar">
 
-                <!-- Nút chọn phòng -->
-                <Button text="Phòng VIP 8 / P...">
-                    <styleClass>
-                        <String fx:value="btn-action" />
-                        <String fx:value="btn-round" />
-                        <String fx:value="btn-sophong" />
-                    </styleClass>
-                    <graphic>
-                        <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
-                            <image>
-                                <Image url="@icons/table.png" />
-                            </image>
-                        </ImageView>
-                    </graphic>
-                </Button>
-
-                <!-- Ô tìm kiếm khách hàng -->
-
-                <StackPane>
-                    <TextField promptText="Tìm khách hàng (F4)">
-                        <styleClass>
-                            <String fx:value="btn-action" />
-                            <String fx:value="search-field" />
-                        </styleClass>
-                    </TextField>
-
-                    <Button text="+">
-                        <styleClass>
-                            <String fx:value="btn-add" />
-                            <String fx:value="btn-round" />
-                        </styleClass>
-                        <StackPane.alignment>
-                            <Pos fx:constant="CENTER_RIGHT" />
-                        </StackPane.alignment>
-                    </Button>
-                </StackPane>
-
-
-
-
-
-                <!-- ComboBox bảng giá -->
-                <ComboBox>
-                    <styleClass>
-                        <String fx:value="btn-action" />
-                        <String fx:value="combo-price" />
-                    </styleClass>
-                    <items>
-                        <FXCollections fx:factory="observableArrayList">
-                            <String fx:value="Bảng giá chung" />
-                            <String fx:value="Bảng giá VIP" />
-                        </FXCollections>
-                    </items>
-                </ComboBox>
-
-                <!-- Nút giỏ hàng -->
-                <Button>
-                    <styleClass>
-                        <String fx:value="btn-action" />
-                        <String fx:value="btn-cart" />
-                    </styleClass>
-                    <graphic>
-                        <ImageView fitHeight="18" fitWidth="18" preserveRatio="true">
-                            <image>
-                                <Image url="@icons/cart.png" />
-                            </image>
-                        </ImageView>
-                    </graphic>
-                </Button>
-
             </HBox>
 
+            <StackPane alignment="CENTER" prefHeight="250" prefWidth="300">
+                <ImageView fx:id="qrImageView" fitHeight="200" fitWidth="200" preserveRatio="true" />
+            </StackPane>
 
-            <TableView fx:id="cartTable" VBox.vgrow="ALWAYS" /> <!-- THAY ĐỔI: Thêm VBox.vgrow="ALWAYS" -->
+            <Label fx:id="statusLabel" text="Trạng thái: Sẵn sàng VNPAY" alignment="CENTER" maxWidth="Infinity" />
+            <TableView fx:id="cartTable" VBox.vgrow="ALWAYS" /> <HBox spacing="10">
+            <Button text="Trong tạm tính" />
 
-            <!-- THAY ĐỔI MỚI: BẢNG TÓM TẮT TÍNH TIỀN -->
-            <VBox spacing="5" styleClass="summary-box">
-                <HBox alignment="CENTER_LEFT" spacing="10">
-                    <Label styleClass="summary-label" text="Tổng tiền món:" HBox.hgrow="ALWAYS" />
-                    <Label fx:id="lblSubTotal" styleClass="summary-value" text="0đ" />
-                </HBox>
+            <Button fx:id="paymentButton" onAction="#handlePaymentAction" styleClass="btn-pay" text="Thanh toán (F9)" />
 
-                <HBox alignment="CENTER_LEFT" spacing="10">
-                    <Label styleClass="summary-label" text="Giảm giá (%/đ):" HBox.hgrow="ALWAYS" />
-                    <TextField fx:id="txtDiscount" prefWidth="100" promptText="Nhập % hoặc số tiền" styleClass="summary-input" text="0" />
-                </HBox>
-
-                <HBox alignment="CENTER_LEFT" spacing="10">
-                    <Label styleClass="summary-label" text="Phí dịch vụ (đ):" HBox.hgrow="ALWAYS" />
-                    <TextField fx:id="txtServiceFee" prefWidth="100" promptText="Nhập số tiền" styleClass="summary-input" text="0" />
-                </HBox>
-
-                <HBox alignment="CENTER_LEFT" spacing="10">
-                    <Label styleClass="summary-label" text="Thuế (VAT %/đ):" HBox.hgrow="ALWAYS" />
-                    <TextField fx:id="txtTax" prefWidth="100" promptText="Nhập % hoặc số tiền" styleClass="summary-input" text="0" />
-                </HBox>
-
-                <!-- Dòng TỔNG CỘNG LỚN -->
-                <HBox alignment="CENTER_LEFT" spacing="10" styleClass="grand-total-row">
-                    <Label styleClass="grand-total-label" text="TỔNG THANH TOÁN:" HBox.hgrow="ALWAYS" />
-                    <Label fx:id="lblGrandTotal" styleClass="grand-total-value" text="0đ" />
-                </HBox>
-            </VBox>
-
-            <!-- Nút Tạm tính/Thanh toán (di chuyển xuống dưới bảng tóm tắt) -->
-            <HBox spacing="10">
-                <Button onAction="#handleSaveOrder" text="Trong tạm tính" />
-                <Button onAction="#handleCheckout" styleClass="btn-pay" text="Thanh toán (F9)" />
-                <Button styleClass="btn-alert" text="Thông báo (F10)" />
-            </HBox>
+            <Button styleClass="btn-alert" text="Thông báo (F10)" />
+        </HBox>
             <BorderPane.margin>
                 <Insets left="7.0" />
             </BorderPane.margin>
