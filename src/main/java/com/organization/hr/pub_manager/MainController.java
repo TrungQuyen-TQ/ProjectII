@@ -176,7 +176,8 @@ public class MainController {
 
     @FXML
     public void reloadMeals() {
-        loadMeals();
+        // <<< THAY ĐỔI 2: Tải lại tất cả món ăn khi làm mới
+        loadMeals("All");
     }
 
     private void loadMeals() {
@@ -217,11 +218,12 @@ public class MainController {
         }
 
         if (!found) {
-            OrderItem newItem = new OrderItem(meal.getName(), meal.getPrice(), 1);
+            OrderItem newItem = new OrderItem(meal.getId(), meal.getName(), meal.getPrice(), 1, meal.getImagePath());
             items.add(newItem);
         }
 
         cartTable.scrollTo(items.size() - 1);
+        updateCartSummary(); // Cập nhật tóm tắt sau khi thêm món
     }
 
 
