@@ -176,8 +176,7 @@ public class MainController {
 
     @FXML
     public void reloadMeals() {
-        // <<< THAY ĐỔI 2: Tải lại tất cả món ăn khi làm mới
-        loadMeals("All");
+        loadMeals();
     }
 
     private void loadMeals() {
@@ -218,12 +217,11 @@ public class MainController {
         }
 
         if (!found) {
-            OrderItem newItem = new OrderItem(meal.getId(), meal.getName(), meal.getPrice(), 1, meal.getImagePath());
+            OrderItem newItem = new OrderItem(meal.getName(), meal.getPrice(), 1);
             items.add(newItem);
         }
 
         cartTable.scrollTo(items.size() - 1);
-        updateCartSummary(); // Cập nhật tóm tắt sau khi thêm món
     }
 
 
@@ -361,5 +359,17 @@ public class MainController {
         public void updateMealImage(int id, String newPath) {
             System.out.println("Đã gọi hàm cập nhật ảnh cho ID: " + id);
         }
+        // Thêm vào MainController.java để xử lý các nút danh mục trong FXML
+
+    }
+    @FXML
+    private void handleCategorySelection(javafx.event.ActionEvent event) {
+        // Đây là phương thức bị thiếu trong Controller
+        Button button = (Button) event.getSource();
+        String category = button.getText();
+        System.out.println("Đã chọn danh mục: " + category);
+
+        // Bạn có thể thêm logic load lại món ăn theo danh mục tại đây
+        // loadMealsByCategory(category);
     }
 }
