@@ -66,12 +66,30 @@
         </AnchorPane>
     </top>
 
+<!--    <left>-->
+<!--        <VBox spacing="5" styleClass="sidebar">-->
+<!--            <Button onAction="#handleCategorySelection" styleClass="btn_category" text="All" />-->
+<!--            <Button onAction="#handleCategorySelection" styleClass="btn_category" text="Bia &amp; Thuốc lá" />-->
+<!--            <Button onAction="#handleCategorySelection" styleClass="btn_category" text="Bún bò Huế" />-->
+<!--            <Button onAction="#handleCategorySelection" styleClass="btn_category" text="Cocktail cổ điển" />-->
+<!--            <BorderPane.margin>-->
+<!--                <Insets right="7.0" />-->
+<!--            </BorderPane.margin>-->
+<!--        </VBox>-->
+<!--    </left>-->
+
     <left>
         <VBox spacing="5" styleClass="sidebar">
-            <Button onAction="#handleCategorySelection" styleClass="btn_category" text="All" />
-            <Button onAction="#handleCategorySelection" styleClass="btn_category" text="Bia &amp; Thuốc lá" />
-            <Button onAction="#handleCategorySelection" styleClass="btn_category" text="Bún bò Huế" />
-            <Button onAction="#handleCategorySelection" styleClass="btn_category" text="Cocktail cổ điển" />
+            <Button styleClass="btn_category" text="All" onAction="#handleCategorySelection" />
+
+            <Button styleClass="btn_category" text="Đồ uống &amp; Thuốc lá" onAction="#handleCategorySelection" />
+
+            <Button styleClass="btn_category" text="Món nước" onAction="#handleCategorySelection" />
+
+            <Button styleClass="btn_category" text="Món cơm" onAction="#handleCategorySelection" />
+
+            <Button styleClass="btn_category" text="Món ăn kèm" onAction="#handleCategorySelection" />
+
             <BorderPane.margin>
                 <Insets right="7.0" />
             </BorderPane.margin>

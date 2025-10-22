@@ -526,7 +526,8 @@ public class MainController {
         menuGrid.getChildren().clear();
 
         new Thread(() -> {
-            List<Meal> meals = mealDao.getAllMeals();
+//            List<Meal> meals = mealDao.getAllMeals();
+            List<Meal> meals = mealDao.getMealsByCategory(categoryName);
 
             Platform.runLater(() -> {
                 for (Meal meal : meals) {
@@ -648,7 +649,7 @@ public class MainController {
         Button button = (Button) event.getSource();
         String category = button.getText();
         System.out.println("Đã chọn danh mục: " + category);
-        // loadMeals(category); // Giữ lại logic gọi DAO lọc theo category nếu cần
-        loadMeals("All");
+         loadMeals(category); // Giữ lại logic gọi DAO lọc theo category nếu cần
+
     }
 }
