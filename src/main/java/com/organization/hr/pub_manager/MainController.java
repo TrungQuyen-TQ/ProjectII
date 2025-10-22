@@ -1,5 +1,9 @@
 package com.organization.hr.pub_manager;
 
+import com.organization.hr.pub_manager.Meal;
+import com.organization.hr.pub_manager.MealDAO;
+import com.organization.hr.pub_manager.OrderItem;
+
 // Các Import cần thiết cho MainController (logic ứng dụng)
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -116,7 +120,7 @@ public class MainController {
         cartTable.getColumns().clear();
         cartTable.getColumns().addAll(nameCol, quantityCol, totalCol);
 
-        loadMeals();
+        loadMeals("All");
 
         // === KHỞI TẠO POLLING SERVICE (GỘP TỪ HELLOCONTROLLER) ===
         if (statusLabel != null) {
@@ -176,20 +180,25 @@ public class MainController {
 
     @FXML
     public void reloadMeals() {
-        loadMeals();
+        loadMeals("All");
     }
 
-    private void loadMeals() {
-        System.out.println("🟡 loadMeals() called...");
+    private void loadMeals(String categoryName) {
+        System.out.println("🟡 loadMeals() called for category: " + categoryName);
         if (menuGrid == null) return; // Bảo vệ nếu chưa được khởi tạo
         menuGrid.getChildren().clear();
 
         new Thread(() -> {
-            List<Meal> meals = mealDao.getAllMeals();
+            // *** DÙNG HÀM LỌC TỪ DAO ***
+            List<Meal> meals = mealDao.getMealsByCategory(categoryName);
 
             Platform.runLater(() -> {
                 for (Meal meal : meals) {
                     menuGrid.getChildren().add(createMealCard(meal));
+                }
+                if (meals.isEmpty()) {
+                    // Hiển thị thông báo nếu không có món ăn nào
+                    menuGrid.getChildren().add(new Label("Không tìm thấy món ăn trong danh mục này."));
                 }
             });
         }).start();
@@ -216,8 +225,15 @@ public class MainController {
             }
         }
 
+        // Khối code đã sửa: Truyền đủ 5 tham số từ đối tượng Meal
         if (!found) {
-            OrderItem newItem = new OrderItem(meal.getName(), meal.getPrice(), 1);
+            OrderItem newItem = new OrderItem(
+                    meal.getId(),           // 1. int mealId
+                    meal.getName(),         // 2. String name
+                    meal.getPrice(),        // 3. double price
+                    1,                      // 4. int quantity (mặc định là 1)
+                    meal.getImagePath()     // 5. String imagePath
+            );
             items.add(newItem);
         }
 
@@ -300,76 +316,14 @@ public class MainController {
     // (Thường là trong một file riêng)
     // ************************************************
 
-    // Giả định class Meal
-    public static class Meal {
-        private final int id;
-        private final String name;
-        private final double price;
-        private final String imagePath;
-
-        public Meal(int id, String name, double price, String imagePath) {
-            this.id = id;
-            this.name = name;
-            this.price = price;
-            this.imagePath = imagePath;
-        }
-        public int getId() { return id; }
-        public String getName() { return name; }
-        public double getPrice() { return price; }
-        public String getImagePath() { return imagePath; }
-    }
-
-    // Giả định class OrderItem
-    public static class OrderItem {
-        private final String name;
-        private double price;
-        private int quantity;
-
-        public OrderItem(String name, double price, int quantity) {
-            this.name = name;
-            this.price = price;
-            this.quantity = quantity;
-        }
-
-        public String getName() { return name; }
-        public double getPrice() { return price; }
-        public int getQuantity() { return quantity; }
-
-        public double getTotal() { return price * quantity; }
-
-        public void setQuantity(int quantity) {
-            this.quantity = quantity;
-            // Thông thường, TableView không cập nhật tự động khi thuộc tính thay đổi
-            // nên cần gọi cartTable.refresh() hoặc dùng SimpleIntegerProperty.
-        }
-    }
-
-    // Giả định class MealDAO (Data Access Object)
-    public static class MealDAO {
-        public List<Meal> getAllMeals() {
-            // Trả về dữ liệu giả định nếu chưa kết nối database
-            return List.of(
-                    new Meal(1, "Phở Bò", 45000.0, "/images/pho.jpg"),
-                    new Meal(2, "Bún Chả", 40000.0, "/images/buncha.jpg"),
-                    new Meal(3, "Bún Bò Huế", 55000.0, "/images/bunbo.jpg"),
-                    new Meal(4, "Cơm Tấm", 48000.0, "/images/comtam.jpg")
-            );
-        }
-        // Giả định
-        public void updateMealImage(int id, String newPath) {
-            System.out.println("Đã gọi hàm cập nhật ảnh cho ID: " + id);
-        }
-        // Thêm vào MainController.java để xử lý các nút danh mục trong FXML
-
-    }
     @FXML
     private void handleCategorySelection(javafx.event.ActionEvent event) {
-        // Đây là phương thức bị thiếu trong Controller
+        // Ép kiểu nguồn sự kiện thành Button
         Button button = (Button) event.getSource();
         String category = button.getText();
         System.out.println("Đã chọn danh mục: " + category);
 
-        // Bạn có thể thêm logic load lại món ăn theo danh mục tại đây
-        // loadMealsByCategory(category);
+        // *** GỌI HÀM LOAD ĐÃ CHỈNH SỬA ***
+        loadMeals(category);
     }
 }
