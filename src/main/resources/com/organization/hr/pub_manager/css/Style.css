@@ -226,6 +226,7 @@
     -fx-background-radius: 5;
     -fx-border-color: #b3e0ff;
     -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 123, 255, 0.15), 5, 0.0, 0, 1);
 }
 
 .grand-total-label {
@@ -242,23 +243,85 @@
 
 /*
 =====================================
-    CÁC NÚT CUỐI CÙNG
+    KHỐI THANH TOÁN TIỀN MẶT (CASH)
 =====================================
 */
-.btn-pay {
-    /* Nút Thanh toán */
-    -fx-background-color: linear-gradient(to bottom, #2ecc71, #27ae60); /* Gradient Xanh Lá */
+.cash-payment-box {
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 0 1 0; /* Chỉ đường viền dưới */
+    -fx-padding: 5 0 10 0;
+}
+
+.cash-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #333;
+}
+
+.cash-input {
+    -fx-background-color: #fffde7; /* Màu vàng nhạt để nổi bật nhập liệu */
+    -fx-background-radius: 5px;
+    -fx-border-color: #ffc107;
+    -fx-border-width: 1px;
+    -fx-padding: 5px 8px;
+    -fx-font-weight: bold;
+}
+
+/* Dòng Tiền trả lại (Change Due) */
+.change-due-row {
+    -fx-padding: 5 0;
+}
+
+.change-due-label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #212529;
+}
+
+.change-due-value {
+    /* Đã được điều chỉnh trong JavaFX Controller dựa trên trạng thái (thiếu/thừa) */
+    -fx-font-size: 18px;
+    -fx-font-weight: extra-bold;
+    /* Màu sẽ được đặt bởi Controller: Xanh (Trả lại) hoặc Đỏ (Còn thiếu) */
+}
+
+
+/*
+=====================================
+    KHỐI VNPAY
+=====================================
+*/
+.vnpay-box {
+    -fx-padding: 10 0;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.vnpay-status-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #6c757d;
+}
+
+.btn-pay-vnpay {
+    -fx-background-color: linear-gradient(to bottom, #007bff, #0056b3); /* Gradient Xanh Dương VNPAY */
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-background-radius: 25px;
-    -fx-padding: 10 20;
-    -fx-font-size: 15px;
-    -fx-effect: dropshadow(gaussian, rgba(46, 204, 113, 0.5), 10, 0.0, 0, 3);
+    -fx-padding: 8 18;
+    -fx-font-size: 14px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 123, 255, 0.5), 10, 0.0, 0, 3);
     -fx-cursor: hand;
 }
-.btn-pay:hover {
-    -fx-background-color: linear-gradient(to bottom, #27ae60, #2ecc71);
+.btn-pay-vnpay:hover {
+    -fx-background-color: linear-gradient(to bottom, #0056b3, #007bff);
 }
+
+
+/*
+=====================================
+    CÁC NÚT CUỐI CÙNG
+=====================================
+*/
 
 .button {
     /* Nút Trong tạm tính */
@@ -270,24 +333,42 @@
     -fx-font-size: 15px;
     -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.5), 10, 0.0, 0, 3);
     -fx-cursor: hand;
+    -fx-max-width: infinity;
 }
 .button:hover {
     -fx-background-color: #2980b9;
 }
 
-.btn-alert {
-    /* Nút Thông báo */
-    -fx-background-color: #f1c40f;
-    -fx-text-fill: #2c3e50;
+.btn-pay {
+    /* Nút Thanh toán Thẻ (Màu Xanh Lá) */
+    -fx-background-color: linear-gradient(to bottom, #2ecc71, #27ae60);
+    -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-background-radius: 25px;
     -fx-padding: 10 20;
     -fx-font-size: 15px;
-    -fx-effect: dropshadow(gaussian, rgba(241, 196, 15, 0.5), 10, 0.0, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(46, 204, 113, 0.5), 10, 0.0, 0, 3);
     -fx-cursor: hand;
+    -fx-max-width: infinity;
 }
-.btn-alert:hover {
-    -fx-background-color: #f39c12;
+.btn-pay:hover {
+    -fx-background-color: linear-gradient(to bottom, #27ae60, #2ecc71);
+}
+
+.btn-cash {
+    /* Nút TIỀN MẶT (Màu Vàng/Cam nổi bật) */
+    -fx-background-color: linear-gradient(to bottom, #ff9f43, #ff6b6b); /* Gradient Cam-Đỏ */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 25px;
+    -fx-padding: 10 20;
+    -fx-font-size: 15px;
+    -fx-effect: dropshadow(gaussian, rgba(255, 159, 67, 0.5), 10, 0.0, 0, 3);
+    -fx-cursor: hand;
+    -fx-max-width: infinity;
+}
+.btn-cash:hover {
+    -fx-background-color: linear-gradient(to bottom, #ff6b6b, #ff9f43);
 }
 
 /* Ghi đè CSS cho nút "Trong tạm tính" để nó là màu xanh dương */
