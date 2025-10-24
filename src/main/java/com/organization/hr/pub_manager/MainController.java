@@ -458,12 +458,7 @@ public class MainController {
         showAlert("Thông báo", "Đơn hàng đã được TẠM TÍNH (LƯU) thành công.", Alert.AlertType.INFORMATION);
     }
 
-    // --- CHỨC NĂNG THANH TOÁN THẺ (KẾT THÚC GIAO DỊCH) ---
-    @FXML
-    public void handleCheckout() {
-        showAlert("Thanh toán", "Đã xử lý thanh toán THẺ. Đơn hàng đã được kết thúc.", Alert.AlertType.INFORMATION);
-        clearCart();
-    }
+
 
     // --- HÀM XỬ LÝ THANH TOÁN BẰNG TIỀN MẶT ---
     @FXML

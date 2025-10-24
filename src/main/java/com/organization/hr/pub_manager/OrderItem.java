@@ -13,7 +13,7 @@ public class OrderItem {
     private final SimpleStringProperty imagePath; // THÊM MỚI: Đường dẫn ảnh để hiển thị trong TableView
     private final SimpleIntegerProperty mealId;   // THÊM MỚI: ID món ăn để so sánh chính xác
 
-    // THAY ĐỔI: Constructor mới bao gồm mealId và imagePath
+
     public OrderItem(int mealId, String name, double price, int quantity, String imagePath) {
         this.mealId = new SimpleIntegerProperty(mealId);
         this.name = new SimpleStringProperty(name);
