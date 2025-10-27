@@ -108,6 +108,23 @@ INSERT INTO `tables` VALUES
 (9,'Ngoài trời 2','Trống'),
 (10,'Ngoài trời 3','Trống');
 
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('ADMIN', 'EMPLOYEE') NOT NULL
+);
+
+-- Thêm tài khoản Admin
+INSERT INTO users (username, password, role)
+VALUES ('admin', 'admin123', 'ADMIN');
+
+-- Thêm tài khoản Nhân viên
+INSERT INTO users (username, password, role)
+VALUES ('nhanvien', 'nhanvien123', 'EMPLOYEE');
+
+
 -- (9, 'Old Fashioned') và (10, 'Mojito Chanh') đã bị loại bỏ
 /*!40000 ALTER TABLE `meals` ENABLE KEYS */;
 UNLOCK TABLES;
