@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="CENTER" spacing="15" style="-fx-background-color: #ffffff; -fx-padding: 25; -fx-border-color: #ccc; -fx-border-width: 1;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.organization.hr.pub_manager.PaymentPopupController">
+    <children>
+        <Label text="Vui lòng quét mã QR để thanh toán">
+            <font>
+                <Font name="System Bold" size="18.0" />
+            </font>
+        </Label>
+        <Label fx:id="amountLabel" text="Số tiền: 50,000đ" style="-fx-font-size: 16px; -fx-text-fill: #e74c3c; -fx-font-weight: bold;" />
+
+        <ImageView fx:id="qrImageView" fitHeight="250.0" fitWidth="250.0" pickOnBounds="true" preserveRatio="true" />
+
+        <Label fx:id="statusLabel" text="Đang khởi tạo..." style="-fx-font-size: 14px; -fx-font-weight: 500;" />
+    </children>
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
+</VBox>

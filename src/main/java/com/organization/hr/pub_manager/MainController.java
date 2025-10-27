@@ -8,8 +8,11 @@ import com.organization.hr.pub_manager.OrderItem;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.application.Platform;
@@ -40,6 +43,12 @@ import javafx.beans.value.ObservableValue;
 
 public class MainController {
 
+    @FXML private BorderPane mainBorderPane; // Thêm fx:id cho BorderPane gốc
+
+    private Node menuView;
+
+    private PaymentPopupController popupController;
+
     // --- @FXML CÁC THÀNH PHẦN ỨNG DỤNG CƠ BẢN ---
     @FXML private TilePane menuGrid;
     @FXML private TableView<OrderItem> cartTable;
@@ -68,38 +77,52 @@ public class MainController {
     // --- CALLBACK & DỊCH VỤ VNPAY ---
     private final Consumer<String> statusCallback = this::updateVnpayStatus;
 
+    // Phương thức cho nút "Bàn làm việc"
+    @FXML
+    private void showTableView() {
+        try {
+            // Tải file FXML quản lý bàn
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("Table_manager.fxml"));
+            Node tableView = loader.load();
+            // Đặt giao diện quản lý bàn vào khu vực trung tâm của BorderPane
+            mainBorderPane.setCenter(tableView);
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Hiển thị lỗi cho người dùng nếu cần
+        }
+    }
+
+    // Phương thức cho nút "Thực đơn" để quay lại
+    @FXML
+    private void showMenuView() {
+        if (menuView != null) {
+            mainBorderPane.setCenter(menuView);
+        }
+    }
+
     private void updateVnpayStatus(String status) {
-        // Platform.runLater đảm bảo cập nhật giao diện trên JavaFX Application Thread
+        // Cập nhật cho popup nếu nó đang tồn tại
+        if (popupController != null) {
+            popupController.updateStatus(status);
+        }
+
+        // Xử lý logic chính khi có kết quả cuối cùng
         Platform.runLater(() -> {
             switch (status.toUpperCase()) {
                 case "PAID":
-                    statusLabel.setText("Thanh toán: THÀNH CÔNG! ✅");
                     showAlert("Thành công", "Giao dịch đã hoàn tất. Đơn hàng đã được lưu.", Alert.AlertType.INFORMATION);
                     if (pollingService != null) pollingService.stopPolling("STOPPED");
-                    clearCart(); // Xóa giỏ hàng sau khi thanh toán thành công
+                    clearCart();
                     break;
                 case "FAILED":
-                    statusLabel.setText("Thanh toán: THẤT BẠI. ❌");
                     showAlert("Thất bại", "Giao dịch thất bại.", Alert.AlertType.WARNING);
                     if (pollingService != null) pollingService.stopPolling("STOPPED");
                     break;
                 case "EXPIRED":
-                    statusLabel.setText("Thanh toán: HẾT HẠN. ⏱️");
                     showAlert("Hết hạn", "Giao dịch đã quá thời gian cho phép.", Alert.AlertType.WARNING);
                     if (pollingService != null) pollingService.stopPolling("STOPPED");
                     break;
-                case "CONNECTION_ERROR":
-                    statusLabel.setText("Lỗi kết nối Server.");
-                    showAlert("Lỗi", "Không thể kết nối đến Server Backend.", Alert.AlertType.ERROR);
-                    break;
-                case "PENDING":
-                    statusLabel.setText("Đang chờ quét mã VNPAY...");
-                    break;
-                case "STOPPED":
-                    // Dừng
-                    break;
-                default:
-                    statusLabel.setText("Trạng thái: " + status + " (Đang Polling...)");
+                // Bỏ các case khác chỉ để hiển thị status, vì popup đã làm việc đó
             }
         });
     }
@@ -257,8 +280,12 @@ public class MainController {
         loadMeals("All");
 
         // === KHỞI TẠO POLLING SERVICE (VNPAY) ===
+        // === KHỞI TẠO POLLING SERVICE (VNPAY) ===
+        // Luôn khởi tạo PollingService vì nó cần thiết cho chức năng thanh toán popup
+        this.pollingService = new PollingService(vnpayService, statusCallback);
+
+        // Chỉ cập nhật statusLabel trên giao diện chính nếu nó tồn tại
         if (statusLabel != null) {
-            this.pollingService = new PollingService(vnpayService, statusCallback);
             statusLabel.setText("Sẵn sàng thanh toán.");
         }
 
@@ -318,18 +345,28 @@ public class MainController {
         // Đảm bảo cập nhật lần đầu tiên
         updateCartSummary();
         calculateChangeDue();
+
+        if (this.mainBorderPane != null) {
+            this.menuView = this.mainBorderPane.getCenter();
+        }
     }
 
     // --- HÀM XỬ LÝ THANH TOÁN VNPAY ---
     @FXML
     public void handlePaymentAction() {
+        System.out.println("✅ Nút Thanh toán Thẻ (F9) ĐÃ ĐƯỢC NHẤN!"); // <--- THÊM DÒNG NÀY
         if (pollingService != null) {
             pollingService.stopPolling("STOPPED");
         }
 
         long totalAmount = (long) Math.ceil(parseValue(grandTotalLabel.getText().replace("đ", "").replace(",", "").trim(), 0.0));
-        long amount = totalAmount > 0 ? totalAmount : 50000;
 
+        if (totalAmount <= 0) {
+            showAlert("Lỗi", "Giỏ hàng trống hoặc tổng tiền bằng 0. Không thể thanh toán.", Alert.AlertType.WARNING);
+            return;
+        }
+
+        long amount = totalAmount > 0 ? totalAmount : 50000;
         String orderId = "ORD" + System.currentTimeMillis();
         String orderInfo = "Thanh toan don hang " + orderId;
 
@@ -340,14 +377,40 @@ public class MainController {
                 Image fxImage = SwingFXUtils.toFXImage(qrImage, null);
 
                 Platform.runLater(() -> {
-                    qrImageView.setImage(fxImage);
-                    pollingService.startPolling(orderId);
+                    try {
+                        // Tải FXML của popup
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("PaymentPopup.fxml"));
+                        VBox popupRoot = loader.load();
+
+                        // Lấy controller của popup
+                        popupController = loader.getController();
+                        popupController.setPaymentInfo(fxImage, amount);
+
+                        // Tạo một Stage (cửa sổ) mới cho popup
+                        Stage popupStage = new Stage();
+                        popupStage.initModality(javafx.stage.Modality.APPLICATION_MODAL); // Chặn tương tác với cửa sổ chính
+                        popupStage.setTitle("Thanh toán VNPAY");
+                        popupStage.setScene(new javafx.scene.Scene(popupRoot));
+
+                        // Bắt đầu polling ngay khi popup hiển thị
+                        pollingService.startPolling(orderId);
+
+                        // Hiển thị và chờ cho đến khi popup được đóng
+                        popupStage.showAndWait();
+
+                        // Khi popup đóng, dừng polling và reset controller
+                        pollingService.stopPolling("STOPPED");
+                        popupController = null;
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        showAlert("Lỗi", "Không thể mở cửa sổ thanh toán.", Alert.AlertType.ERROR);
+                    }
                 });
 
             } catch (Exception e) {
                 e.printStackTrace();
                 Platform.runLater(() -> {
-                    statusLabel.setText("Lỗi khởi tạo thanh toán.");
                     showAlert("Lỗi", "Không thể khởi tạo QR Code: " + e.getMessage(), Alert.AlertType.ERROR);
                 });
             }
