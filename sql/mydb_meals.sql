@@ -79,6 +79,35 @@ INSERT INTO `meals` (`id`, `category_id`, `name`, `price`, `image_path`) VALUES
 -- Thêm cà phê vào nhóm Đồ uống & Thuốc lá
 (9, 5, 'Cà phê sữa đá', 25000, '/images/ca_phe_sua.jpg');       -- Đồ uống & Thuốc lá
 
+DROP TABLE IF EXISTS `tables`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tables` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `status` varchar(50) DEFAULT 'Trống',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data cho bảng `tables`
+--
+
+LOCK TABLES `tables` WRITE;
+/*!40000 ALTER TABLE `tables` DISABLE KEYS */;
+INSERT INTO `tables` VALUES
+(1,'Bàn 1','Trống'),
+(2,'Bàn 2','Có khách'),
+(3,'Bàn 3','Trống'),
+(4,'Bàn 4','Đã đặt'),
+(5,'Bàn 5','Trống'),
+(6,'VIP 1','Có khách'),
+(7,'VIP 2','Trống'),
+(8,'Ngoài trời 1','Có khách'),
+(9,'Ngoài trời 2','Trống'),
+(10,'Ngoài trời 3','Trống');
+
 -- (9, 'Old Fashioned') và (10, 'Mojito Chanh') đã bị loại bỏ
 /*!40000 ALTER TABLE `meals` ENABLE KEYS */;
 UNLOCK TABLES;
