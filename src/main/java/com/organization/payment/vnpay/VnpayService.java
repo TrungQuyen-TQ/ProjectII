@@ -10,8 +10,8 @@ import java.io.IOException;
 public class VnpayService {
 
     // ĐỊA CHỈ API CỦA BACKEND NEXT.JS (SỬ DỤNG CỔNG 8888)
-    private static final String CREATE_PAYMENT_URL = "http://localhost:8888/order/create_payment_url";
-    private static final String QUERY_DR_URL = "http://localhost:8888/order/querydr";
+    private static final String CREATE_PAYMENT_URL = "http://localhost:3000/order/create_payment_url";
+    private static final String QUERY_DR_URL = "http://localhost:3000/order/querydr";
 
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
