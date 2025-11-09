@@ -33,4 +33,23 @@ public class TableDAO {
         }
         return tables;
     }
+
+    public void updateTableStatus(int tableId, String status) {
+        // Lấy từ CSDL
+        String sql = "UPDATE tables SET status = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, status);
+            ps.setInt(2, tableId);
+            ps.executeUpdate();
+
+            System.out.println("✅ Đã cập nhật trạng thái bàn " + tableId + " thành: " + status);
+
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi cập nhật trạng thái bàn: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }

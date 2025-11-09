@@ -77,6 +77,8 @@ public class MainController {
 
     // --- DỊCH VỤ VÀ POLLING ---
     private final MealDAO mealDao = new MealDAO();
+    private final TableDAO tableDAO = new TableDAO(); // DAO để cập nhật bàn
+    private Order currentOrder; // Biến để lưu đơn hàng đang xử lý
     private final VnpayService vnpayService = new VnpayService();
     private PollingService pollingService;
 
@@ -131,6 +133,8 @@ public class MainController {
         clearCart(); // clearCart() đã bao gồm cả việc reset summary
         cartTable.getItems().addAll(items);
 
+        this.currentOrder = order;// Gán đơn hàng MỚI đang xử lý
+
         // 4. Cập nhật lại tổng tiền (clearCart() có thể đã gọi, nhưng gọi lại cho chắc)
         updateCartSummary();
         calculateChangeDue();
@@ -152,6 +156,17 @@ public class MainController {
             switch (status.toUpperCase()) {
                 case "PAID":
                     showAlert("Thành công", "Giao dịch đã hoàn tất. Đơn hàng đã được lưu.", Alert.AlertType.INFORMATION);
+                    // === THÊM KHỐI NÀY (TRƯỚC KHI CLEARCART) ===
+                    if (this.currentOrder != null) {
+                        // 1. Cập nhật Bill (Order) sang "PAID"
+                        orderDAO.updateOrderStatus(currentOrder.getId(), "PAID");
+
+                        // 2. Cập nhật Bàn (Table) sang "Trống"
+                        tableDAO.updateTableStatus(currentOrder.getTableId(), "Trống");
+
+                        System.out.println("✅ Cập nhật CSDL (VNPAY): Order -> PAID, Table -> Trống");
+                    }
+                    // ===========================================
                     if (pollingService != null) pollingService.stopPolling("STOPPED");
                     clearCart();
                     break;
@@ -589,6 +604,18 @@ public class MainController {
             return;
         }
 
+        // === THÊM KHỐI NÀY (TRƯỚC KHI BÁO THÀNH CÔNG) ===
+        if (this.currentOrder != null) {
+            // 1. Cập nhật Bill (Order) sang "PAID"
+            orderDAO.updateOrderStatus(currentOrder.getId(), "PAID");
+
+            // 2. Cập nhật Bàn (Table) sang "Trống"
+            tableDAO.updateTableStatus(currentOrder.getTableId(), "Trống");
+
+            System.out.println("✅ Cập nhật CSDL (Tiền mặt): Order -> PAID, Table -> Trống");
+        }
+        // ===============================================
+
         // Hoàn tất giao dịch tiền mặt
         double change = cashReceived - grandTotal;
         String message = String.format("Thanh toán TIỀN MẶT đã hoàn tất.\nTổng tiền: %,.0fđ\nKhách đưa: %,.0fđ\nTiền trả lại: %,.0fđ",
@@ -609,6 +636,7 @@ public class MainController {
             if (txtCashReceived != null) txtCashReceived.setText(""); // ĐẶT LẠI TIỀN MẶT NHẬN
             updateCartSummary(); // Cập nhật lại tổng tiền về 0
             calculateChangeDue(); // Cập nhật lại tiền thừa về 0
+            this.currentOrder = null; // Reset đơn hàng đang xử lý
         }
     }
 
