@@ -72,4 +72,21 @@ public class OrderDAO {
         }
         return items;
     }
+
+    public void updateOrderStatus(int orderId, String status) {
+        // Lấy từ CSDL
+        String sql = "UPDATE orders SET status = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, status);
+            ps.setInt(2, orderId);
+            ps.executeUpdate();
+
+            System.out.println("✅ Đã cập nhật trạng thái order " + orderId + " thành: " + status);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
