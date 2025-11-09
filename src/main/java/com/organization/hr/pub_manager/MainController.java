@@ -4,6 +4,10 @@ import com.organization.hr.pub_manager.Meal;
 import com.organization.hr.pub_manager.MealDAO;
 import com.organization.hr.pub_manager.OrderItem;
 
+import com.organization.hr.pub_manager.Order;
+import com.organization.hr.pub_manager.OrderDAO;
+import com.organization.hr.pub_manager.TableManagerController;
+
 // Các Import cần thiết cho MainController (logic ứng dụng)
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -47,6 +51,8 @@ public class MainController {
 
     private Node menuView;
 
+    private final OrderDAO orderDAO = new OrderDAO();
+
     private PaymentPopupController popupController;
 
     // --- @FXML CÁC THÀNH PHẦN ỨNG DỤNG CƠ BẢN ---
@@ -84,6 +90,10 @@ public class MainController {
             // Tải file FXML quản lý bàn
             FXMLLoader loader = new FXMLLoader(getClass().getResource("Table_manager.fxml"));
             Node tableView = loader.load();
+            // Lấy controller của Table_manager.fxml
+            TableManagerController tableManagerController = loader.getController();
+            // Đưa MainController (this) cho TableManagerController biết
+            tableManagerController.setMainController(this);
             // Đặt giao diện quản lý bàn vào khu vực trung tâm của BorderPane
             mainBorderPane.setCenter(tableView);
         } catch (IOException e) {
@@ -98,6 +108,37 @@ public class MainController {
         if (menuView != null) {
             mainBorderPane.setCenter(menuView);
         }
+    }
+
+    public void loadOrderForTable(int tableId) {
+        // 1. Tìm đơn hàng đang hoạt động (PENDING/SERVED) của bàn
+        // (Giả sử bạn đã tạo Order.java và OrderDAO.java)
+        Order order = orderDAO.getActiveOrderByTableId(tableId);
+
+        if (order == null) {
+            // Nếu không có đơn hàng (ví dụ: bàn trống), chỉ thông báo
+            showAlert("Thông báo", "Bàn này hiện không có đơn hàng nào đang mở.", Alert.AlertType.INFORMATION);
+            // Xóa giỏ hàng cũ (nếu có)
+            clearCart();
+            return;
+        }
+
+        // 2. Lấy tất cả các món ăn chi tiết của đơn hàng đó
+        // (OrderDAO sẽ trả về List<OrderItem>)
+        List<OrderItem> items = orderDAO.getOrderDetailsByOrderId(order.getId());
+
+        // 3. Xóa giỏ hàng hiện tại và nạp các món mới vào
+        clearCart(); // clearCart() đã bao gồm cả việc reset summary
+        cartTable.getItems().addAll(items);
+
+        // 4. Cập nhật lại tổng tiền (clearCart() có thể đã gọi, nhưng gọi lại cho chắc)
+        updateCartSummary();
+        calculateChangeDue();
+
+        // 5. Tự động chuyển về giao diện thực đơn/thanh toán
+        showMenuView();
+
+        System.out.println("✅ Đã tải đơn hàng " + order.getId() + " của bàn " + tableId + " vào giỏ hàng.");
     }
 
     private void updateVnpayStatus(String status) {
@@ -558,7 +599,7 @@ public class MainController {
     }
 
 
-    private void clearCart() {
+    public void clearCart() {
         if (cartTable != null) {
             cartTable.getItems().clear();
             // Đặt lại các trường nhập liệu
