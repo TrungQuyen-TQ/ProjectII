@@ -89,4 +89,63 @@ public class OrderDAO {
             e.printStackTrace();
         }
     }
+
+    public void resyncOrderDetails(int orderId, List<OrderItem> finalItems, double finalTotal) {
+        String deleteSql = "DELETE FROM order_details WHERE order_id = ?";
+        String insertSql = "INSERT INTO order_details (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)";
+        String updateTotalSql = "UPDATE orders SET total_amount = ? WHERE id = ?";
+
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false); // Bắt đầu Transaction
+
+            // 1. Xóa tất cả chi tiết đơn hàng cũ
+            try (PreparedStatement psDelete = conn.prepareStatement(deleteSql)) {
+                psDelete.setInt(1, orderId);
+                psDelete.executeUpdate();
+            }
+
+            // 2. Thêm lại các chi tiết đơn hàng mới (5 món)
+            try (PreparedStatement psInsert = conn.prepareStatement(insertSql)) {
+                for (OrderItem item : finalItems) {
+                    psInsert.setInt(1, orderId);
+                    psInsert.setInt(2, item.getMealId()); // Dùng getMealId() từ OrderItem
+                    psInsert.setInt(3, item.getQuantity());
+                    psInsert.setDouble(4, item.getPrice());
+                    psInsert.addBatch();
+                }
+                psInsert.executeBatch();
+            }
+
+            // 3. Cập nhật tổng tiền mới cho đơn hàng
+            try (PreparedStatement psUpdateTotal = conn.prepareStatement(updateTotalSql)) {
+                psUpdateTotal.setDouble(1, finalTotal);
+                psUpdateTotal.setInt(2, orderId);
+                psUpdateTotal.executeUpdate();
+            }
+
+            conn.commit(); // Hoàn tất Transaction
+            System.out.println("✅ Đã đồng bộ hóa Order " + orderId + " với " + finalItems.size() + " món.");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (conn != null) {
+                try {
+                    conn.rollback(); // Hoàn tác nếu có lỗi
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }

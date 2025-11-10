@@ -158,10 +158,16 @@ public class MainController {
                     showAlert("Thành công", "Giao dịch đã hoàn tất. Đơn hàng đã được lưu.", Alert.AlertType.INFORMATION);
                     // === THÊM KHỐI NÀY (TRƯỚC KHI CLEARCART) ===
                     if (this.currentOrder != null) {
-                        // 1. Cập nhật Bill (Order) sang "PAID"
-                        orderDAO.updateOrderStatus(currentOrder.getId(), "PAID");
+                        // 1. Lấy danh sách
+                        List<OrderItem> finalItems = cartTable.getItems();
+                        // 2. Lấy tổng tiền cuối cùng từ label
+                        double finalTotal = parseValue(grandTotalLabel.getText().replace("đ", "").trim(), 0.0);
 
-                        // 2. Cập nhật Bàn (Table) sang "Trống"
+                        // 3. Đồng bộ CSDL
+                        orderDAO.resyncOrderDetails(currentOrder.getId(), finalItems, finalTotal);
+
+                        // 4. Cập nhật trạng thái
+                        orderDAO.updateOrderStatus(currentOrder.getId(), "PAID");
                         tableDAO.updateTableStatus(currentOrder.getTableId(), "Trống");
 
                         System.out.println("✅ Cập nhật CSDL (VNPAY): Order -> PAID, Table -> Trống");
@@ -607,9 +613,15 @@ public class MainController {
         // === THÊM KHỐI NÀY (TRƯỚC KHI BÁO THÀNH CÔNG) ===
         if (this.currentOrder != null) {
             // 1. Cập nhật Bill (Order) sang "PAID"
+            List<OrderItem> finalItems = cartTable.getItems();
+
+            // 2. Đồng bộ 5 món này và tổng tiền mới vào CSDL
+            orderDAO.resyncOrderDetails(currentOrder.getId(), finalItems, grandTotal);
+
+            // 3. Đánh dấu đơn hàng (đã cập nhật) là "PAID"
             orderDAO.updateOrderStatus(currentOrder.getId(), "PAID");
 
-            // 2. Cập nhật Bàn (Table) sang "Trống"
+            // 4. Đổi trạng thái bàn
             tableDAO.updateTableStatus(currentOrder.getTableId(), "Trống");
 
             System.out.println("✅ Cập nhật CSDL (Tiền mặt): Order -> PAID, Table -> Trống");
