@@ -36,8 +36,8 @@
                     </Label>
                     <Label fx:id="tableNameLabel" text="Chưa chọn bàn" />
                     <Label fx:id="tableStatusLabel" text="Trạng thái: " />
-                    <Label text="Tổng tiền:" />
-                    <Label fx:id="totalAmountLabel" style="-fx-font-weight: bold;" text="0đ" />
+<!--                    <Label text="Tổng tiền:" />-->
+<!--                    <Label fx:id="totalAmountLabel" style="-fx-font-weight: bold;" text="0đ" />-->
                 </VBox>
             </right>
         </BorderPane>
