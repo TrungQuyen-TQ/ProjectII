@@ -73,7 +73,7 @@ public class MainController {
     // --- DỊCH VỤ VÀ POLLING ---
     private final MealDAO mealDao = new MealDAO();
     private final TableDAO tableDAO = new TableDAO(); // DAO để cập nhật bàn
-    private Order currentOrder; // Biến để lưu đơn hàng đang xử lý
+    private int currentTableId = -1;
 
     private List<Table> allTablesList; // Lưu trữ TẤT CẢ các bàn
     private final int tablesPerPage = 20; // Đặt số bàn mỗi trang (bạn có thể đổi số 20)
@@ -94,37 +94,30 @@ public class MainController {
     private ScheduledExecutorService tablePoller;
     private final int POLLING_INTERVAL_SECONDS = 5; // Kiểm tra CSDL mỗi 5 giây
 
+    // === HÀM TẢI MÓN (ĐÃ SỬA ĐỔI CHO GỘP ĐƠN) ===
     public void loadOrderForTable(int tableId) {
-        // 1. Tìm đơn hàng đang hoạt động (PENDING/SERVED) của bàn
-        // (Giả sử bạn đã tạo Order.java và OrderDAO.java)
-        Order order = orderDAO.getActiveOrderByTableId(tableId);
+        // 1. Lấy danh sách món ăn GỘP (dùng hàm mới getCombinedOrderItems trong OrderDAO)
+        List<OrderItem> items = orderDAO.getCombinedOrderItems(tableId);
 
-        if (order == null) {
-            // Nếu không có đơn hàng (ví dụ: bàn trống), chỉ thông báo
-            showAlert("Thông báo", "Bàn này hiện không có đơn hàng nào đang mở.", Alert.AlertType.INFORMATION);
-            // Xóa giỏ hàng cũ (nếu có)
+        if (items.isEmpty()) {
+            // Nếu không có món nào, chỉ báo bàn trống
+            showAlert("Thông báo", "Bàn này hiện không có món nào đang phục vụ.", Alert.AlertType.INFORMATION);
             clearCart();
             return;
         }
 
-        // 2. Lấy tất cả các món ăn chi tiết của đơn hàng đó
-        // (OrderDAO sẽ trả về List<OrderItem>)
-        List<OrderItem> items = orderDAO.getOrderDetailsByOrderId(order.getId());
-
-        // 3. Xóa giỏ hàng hiện tại và nạp các món mới vào
-        clearCart(); // clearCart() đã bao gồm cả việc reset summary
+        // 2. Đưa vào giỏ hàng
+        clearCart(); // Xóa giỏ hàng cũ và reset các trường
         cartTable.getItems().addAll(items);
 
-        this.currentOrder = order;// Gán đơn hàng MỚI đang xử lý
+        // 3. [QUAN TRỌNG] Lưu lại ID bàn để lát thanh toán
+        this.currentTableId = tableId;
 
-        // 4. Cập nhật lại tổng tiền (clearCart() có thể đã gọi, nhưng gọi lại cho chắc)
+        // 4. Cập nhật lại tính toán tiền
         updateCartSummary();
         calculateChangeDue();
 
-        // 5. Tự động chuyển về giao diện thực đơn/thanh toán
-//        showMenuView();
-
-        System.out.println("✅ Đã tải đơn hàng " + order.getId() + " của bàn " + tableId + " vào giỏ hàng.");
+        System.out.println("✅ Đã tải tổng hợp " + items.size() + " món của bàn " + tableId);
     }
 
     private void updateVnpayStatus(String status) {
@@ -139,20 +132,15 @@ public class MainController {
                 case "PAID":
                     showAlert("Thành công", "Giao dịch đã hoàn tất. Đơn hàng đã được lưu.", Alert.AlertType.INFORMATION);
                     // === THÊM KHỐI NÀY (TRƯỚC KHI CLEARCART) ===
-                    if (this.currentOrder != null) {
-                        // 1. Lấy danh sách
-                        List<OrderItem> finalItems = cartTable.getItems();
-                        // 2. Lấy tổng tiền cuối cùng từ label
-                        double finalTotal = parseValue(grandTotalLabel.getText().replace("đ", "").trim(), 0.0);
+                    if (this.currentTableId > 0) {
 
-                        // 3. Đồng bộ CSDL
-                        orderDAO.resyncOrderDetails(currentOrder.getId(), finalItems, finalTotal);
+                        // [THAY ĐỔI] Gọi hàm thanh toán TẤT CẢ đơn hàng của bàn
+                        orderDAO.payAllActiveOrders(currentTableId, "PAID");
 
-                        // 4. Cập nhật trạng thái
-                        orderDAO.updateOrderStatus(currentOrder.getId(), "PAID");
-                        tableDAO.updateTableStatus(currentOrder.getTableId(), "Trống");
+                        // [THAY ĐỔI] Cập nhật trạng thái bàn về Trống
+                        tableDAO.updateTableStatus(currentTableId, "Trống");
 
-                        System.out.println("✅ Cập nhật CSDL (VNPAY): Order -> PAID, Table -> Trống");
+                        System.out.println("✅ Đã thanh toán gộp cho bàn: " + currentTableId);
                     }
                     // ===========================================
                     if (pollingService != null) pollingService.stopPolling("STOPPED");
@@ -399,6 +387,8 @@ public class MainController {
                 // Lấy dữ liệu MỚI NHẤT từ CSDL
                 List<Table> freshTables = tableDAO.getAllTables();
 
+                refreshCurrentOrder();
+
                 // Cập nhật giao diện trên luồng JavaFX chính
                 Platform.runLater(() -> {
                     // Cập nhật danh sách bàn
@@ -486,7 +476,7 @@ public class MainController {
 
         long amount = totalAmount > 0 ? totalAmount : 50000;
         String orderId = "ORD" + System.currentTimeMillis();
-        String orderInfo = "Thanh toan don hang " + orderId;
+        String orderInfo = "Thanh toan ban " + currentTableId;
 
         new Thread(() -> {
             try {
@@ -667,20 +657,15 @@ public class MainController {
         }
 
         // === THÊM KHỐI NÀY (TRƯỚC KHI BÁO THÀNH CÔNG) ===
-        if (this.currentOrder != null) {
-            // 1. Cập nhật Bill (Order) sang "PAID"
-            List<OrderItem> finalItems = cartTable.getItems();
+        if (this.currentTableId > 0) {
 
-            // 2. Đồng bộ 5 món này và tổng tiền mới vào CSDL
-            orderDAO.resyncOrderDetails(currentOrder.getId(), finalItems, grandTotal);
+            // [THAY ĐỔI] Gọi hàm thanh toán TẤT CẢ đơn hàng của bàn
+            orderDAO.payAllActiveOrders(currentTableId, "PAID");
 
-            // 3. Đánh dấu đơn hàng (đã cập nhật) là "PAID"
-            orderDAO.updateOrderStatus(currentOrder.getId(), "PAID");
+            // [THAY ĐỔI] Cập nhật trạng thái bàn về Trống
+            tableDAO.updateTableStatus(currentTableId, "Trống");
 
-            // 4. Đổi trạng thái bàn
-            tableDAO.updateTableStatus(currentOrder.getTableId(), "Trống");
-
-            System.out.println("✅ Cập nhật CSDL (Tiền mặt): Order -> PAID, Table -> Trống");
+            System.out.println("✅ Đã thanh toán gộp cho bàn: " + currentTableId);
         }
         // ===============================================
 
@@ -704,7 +689,7 @@ public class MainController {
             if (txtCashReceived != null) txtCashReceived.setText(""); // ĐẶT LẠI TIỀN MẶT NHẬN
             updateCartSummary(); // Cập nhật lại tổng tiền về 0
             calculateChangeDue(); // Cập nhật lại tiền thừa về 0
-            this.currentOrder = null; // Reset đơn hàng đang xử lý
+            this.currentTableId = -1; // Reset đơn hàng đang xử lý
         }
     }
 
@@ -777,24 +762,48 @@ public class MainController {
         // 2. Lấy đơn hàng đang hoạt động (PENDING hoặc SERVED)
         Order order = orderDAO.getActiveOrderByTableId(table.getId());
 
-        // 3. Xử lý logic dựa trên trạng thái
         if (table.getStatus().equals("Có khách") && order != null) {
-            // TRƯỜNG HỢP 1: Bàn "Có khách" VÀ có đơn hàng
-            // -> Tải đơn hàng vào giỏ hàng
-            totalAmountLabel.setText(String.format("%,.0fđ", order.getTotalAmount()));
-            loadOrderForTable(table.getId()); // Tải món ăn
+            // [LOGIC ĐÚNG] Khách đang ngồi ăn -> Tải toàn bộ món lên giỏ
+//            totalAmountLabel.setText(String.format("%,.0fđ", order.getTotalAmount()));
+            loadOrderForTable(table.getId());
 
         } else if (order != null) {
-            // TRƯỜNG HỢP 2: Bàn "Đã đặt" (hoặc trạng thái khác) VÀ có đơn hàng
-            // -> Chỉ hiển thị tổng tiền, KHÔNG tải vào giỏ hàng
+            // [LOGIC ĐÚNG] Bàn đặt trước (chưa ăn) -> Chỉ hiện tiền cọc/đặt, KHÔNG tải món
             totalAmountLabel.setText(String.format("%,.0fđ", order.getTotalAmount()));
-            clearCart(); // Xóa giỏ hàng cũ
+            clearCart();
 
         } else {
-            // TRƯỜNG HỢP 3: Bàn "Trống" (hoặc không có đơn hàng)
-            // -> Xóa giỏ hàng và reset tổng tiền
+            // Bàn trống
             totalAmountLabel.setText("0đ");
             clearCart();
+        }
+    }
+    private void refreshCurrentOrder() {
+        // Chỉ chạy nếu đang chọn một bàn cụ thể
+        if (this.currentTableId <= 0) return;
+
+        try {
+            // 1. Lấy dữ liệu mới nhất từ DB
+            List<OrderItem> freshItems = orderDAO.getCombinedOrderItems(this.currentTableId);
+
+            // 2. Cập nhật giao diện (Bắt buộc dùng Platform.runLater)
+            Platform.runLater(() -> {
+                // Lưu lại các giá trị nhập liệu hiện tại để không bị reset
+                String currentCash = txtCashReceived.getText();
+                String currentDiscount = txtDiscount.getText();
+
+                // Cập nhật giỏ hàng
+                cartTable.getItems().setAll(freshItems);
+
+                // Tính toán lại tổng tiền
+                updateCartSummary();
+                calculateChangeDue();
+
+                // Cập nhật lại tổng tiền bên sidebar bàn (cho đồng bộ)
+                totalAmountLabel.setText(grandTotalLabel.getText());
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
