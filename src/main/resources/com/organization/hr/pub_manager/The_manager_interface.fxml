@@ -7,98 +7,40 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
-
-<BorderPane fx:id="mainBorderPane" styleClass="parent" stylesheets="@css/Style.css" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.organization.hr.pub_manager.MainController">
-
-    <top>
-        <AnchorPane prefHeight="700.0" prefWidth="1080.0" styleClass="topbar" BorderPane.alignment="CENTER">
-            <children>
-                <Button fx:id="workbenchButton" onAction="#showTableView" layoutX="12.0" layoutY="14.0" mnemonicParsing="false" styleClass="btn_menu" text="Bàn làm việc" translateY="5.0">
-                    <graphic>
-                        <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
-                            <image>
-                                <Image url="@icons/table.png" />
-                            </image>
-                        </ImageView>
-                    </graphic>
-                    <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                    </padding>
-                </Button>
-                <Button fx:id="menuButton" onAction="#showMenuView" layoutX="142.0" layoutY="14.0" mnemonicParsing="false" prefHeight="41.0" prefWidth="129.0" styleClass="btn_menu" text="Thực đơn" translateY="5.0">
-                    <graphic>
-                        <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
-                            <image>
-                                <Image url="@icons/restaurant.png" />
-                            </image>
-                        </ImageView>
-                    </graphic>
-                    <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                    </padding>
-                </Button>
-                <ImageView fitHeight="16" fitWidth="16" layoutX="312.0" layoutY="28.0" preserveRatio="true" translateY="-3.0">
-                    <image>
-                        <Image url="@icons/magnifying-glass.png" />
-                    </image>
-                </ImageView>
-                <TextField layoutX="333.0" layoutY="22.0" promptText="Tìm kiếm mục (F:)" translateY="-3.0" />
-                <Button layoutX="538.0" layoutY="23.0" styleClass="btn_circle" translateY="-7.0">
-                    <graphic>
-                        <ImageView fitHeight="20" fitWidth="20" preserveRatio="true" translateY="1.0">
-                            <image>
-                                <Image url="@icons/flash.png" />
-                            </image>
-                        </ImageView>
-                    </graphic>
-                </Button>
-            </children>
-        </AnchorPane>
-    </top>
-
-<!--    <left>-->
-<!--        <VBox spacing="5" styleClass="sidebar">-->
-<!--            <Button onAction="#handleCategorySelection" styleClass="btn_category" text="All" />-->
-<!--            <Button onAction="#handleCategorySelection" styleClass="btn_category" text="Bia &amp; Thuốc lá" />-->
-<!--            <Button onAction="#handleCategorySelection" styleClass="btn_category" text="Bún bò Huế" />-->
-<!--            <Button onAction="#handleCategorySelection" styleClass="btn_category" text="Cocktail cổ điển" />-->
-<!--            <BorderPane.margin>-->
-<!--                <Insets right="7.0" />-->
-<!--            </BorderPane.margin>-->
-<!--        </VBox>-->
-<!--    </left>-->
-
-    <left>
-        <VBox spacing="5" styleClass="sidebar">
-            <Button styleClass="btn_category" text="All" onAction="#handleCategorySelection" />
-
-            <Button styleClass="btn_category" text="Đồ uống &amp; Thuốc lá" onAction="#handleCategorySelection" />
-
-            <Button styleClass="btn_category" text="Món nước" onAction="#handleCategorySelection" />
-
-            <Button styleClass="btn_category" text="Món cơm" onAction="#handleCategorySelection" />
-
-            <Button styleClass="btn_category" text="Món ăn kèm" onAction="#handleCategorySelection" />
-
-            <BorderPane.margin>
-                <Insets right="7.0" />
-            </BorderPane.margin>
-        </VBox>
-    </left>
-
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.control.Pagination?>  <BorderPane fx:id="mainBorderPane" styleClass="parent" stylesheets="@css/Style.css" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.organization.hr.pub_manager.MainController">
 
     <center>
-        <TilePane fx:id="menuGrid" hgap="15" prefColumns="4" styleClass="menu-grid" vgap="15" />
+        <BorderPane>
+            <center>
+                <Pagination fx:id="tablePagination" styleClass="table-pagination" />
+            </center>
+            <right>
+                <VBox prefWidth="250" spacing="10" style="-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-border-width: 0 0 0 1;">
+                    <padding>
+                        <Insets top="10" right="10" bottom="10" left="10" />
+                    </padding>
+                    <Label text="Thông tin bàn">
+                        <font>
+                            <Font name="System Bold" size="18.0" />
+                        </font>
+                    </Label>
+                    <Label fx:id="tableNameLabel" text="Chưa chọn bàn" />
+                    <Label fx:id="tableStatusLabel" text="Trạng thái: " />
+                    <Label text="Tổng tiền:" />
+                    <Label fx:id="totalAmountLabel" style="-fx-font-weight: bold;" text="0đ" />
+                </VBox>
+            </right>
+        </BorderPane>
     </center>
 
     <right>
@@ -162,7 +104,6 @@
                 </Button>
             </HBox>
 
-
             <TableView fx:id="cartTable" VBox.vgrow="ALWAYS" />
 
             <VBox spacing="5" styleClass="summary-box">
@@ -193,25 +134,21 @@
                     <Label text="Tiền mặt nhận (đ):" styleClass="cash-label" HBox.hgrow="ALWAYS"/>
                     <TextField fx:id="txtCashReceived" promptText="Số tiền khách đưa" prefWidth="100" styleClass="cash-input"/>
                 </HBox>
-
                 <HBox alignment="CENTER_LEFT" spacing="10" styleClass="change-due-row">
                     <Label text="Tiền trả lại:" styleClass="change-due-label" HBox.hgrow="ALWAYS"/>
                     <Label fx:id="lblChangeDue" text="0đ" styleClass="change-due-value"/>
                 </HBox>
             </VBox>
+
             <VBox alignment="CENTER" spacing="5" styleClass="vnpay-box">
-<!--                <HBox alignment="CENTER" spacing="15">-->
-<!--                    <Label fx:id="statusLabel" text="Sẵn sàng thanh toán." styleClass="vnpay-status-label" />-->
-<!--                </HBox>-->
-<!--                <StackPane alignment="CENTER" prefHeight="250" prefWidth="300">-->
-<!--                    <ImageView fx:id="qrImageView" fitHeight="200" fitWidth="200" preserveRatio="true" />-->
-<!--                </StackPane>-->
             </VBox>
+
             <HBox spacing="10">
                 <Button onAction="#handleSaveOrder" text="Trong tạm tính" />
                 <Button onAction="#handlePaymentAction" styleClass="btn-pay" text="Thanh toán Thẻ (F9)" />
                 <Button onAction="#handleCashPayment" styleClass="btn-cash" text="TIỀN MẶT" />
             </HBox>
+
             <BorderPane.margin>
                 <Insets left="7.0" />
             </BorderPane.margin>

@@ -1,35 +1,31 @@
 package com.organization.hr.pub_manager;
 
-import com.organization.hr.pub_manager.Meal;
-import com.organization.hr.pub_manager.MealDAO;
-import com.organization.hr.pub_manager.OrderItem;
-
-import com.organization.hr.pub_manager.Order;
-import com.organization.hr.pub_manager.OrderDAO;
-import com.organization.hr.pub_manager.TableManagerController;
-
 // Các Import cần thiết cho MainController (logic ứng dụng)
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
+        import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.control.*;
+        import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
-import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-import javafx.scene.input.MouseButton;
-import java.io.File;
-import java.net.URL;
+        import javafx.stage.Stage;
+
+        import java.net.URL;
 import java.util.List;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.util.Callback;
 import javafx.scene.layout.HBox;
+
+import javafx.scene.control.Pagination;
+import javafx.scene.Node;
+import javafx.geometry.Insets;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 // --- IMPORT CHO TÍCH HỢP VNPAY ---
 import com.organization.payment.vnpay.QrGenerator;
@@ -42,21 +38,20 @@ import java.awt.image.BufferedImage;
 import java.util.function.Consumer;
 import java.io.IOException;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 // -----------------------------------------------------------
 
 public class MainController {
 
     @FXML private BorderPane mainBorderPane; // Thêm fx:id cho BorderPane gốc
 
-    private Node menuView;
+//    private Node menuView;
 
     private final OrderDAO orderDAO = new OrderDAO();
 
     private PaymentPopupController popupController;
 
     // --- @FXML CÁC THÀNH PHẦN ỨNG DỤNG CƠ BẢN ---
-    @FXML private TilePane menuGrid;
+//    @FXML private TilePane menuGrid;
     @FXML private TableView<OrderItem> cartTable;
 
     // --- @FXML CÁC THÀNH PHẦN TÓM TẮT ĐƠN HÀNG ---
@@ -79,38 +74,25 @@ public class MainController {
     private final MealDAO mealDao = new MealDAO();
     private final TableDAO tableDAO = new TableDAO(); // DAO để cập nhật bàn
     private Order currentOrder; // Biến để lưu đơn hàng đang xử lý
+
+    private List<Table> allTablesList; // Lưu trữ TẤT CẢ các bàn
+    private final int tablesPerPage = 20; // Đặt số bàn mỗi trang (bạn có thể đổi số 20)
+
     private final VnpayService vnpayService = new VnpayService();
     private PollingService pollingService;
 
     // --- CALLBACK & DỊCH VỤ VNPAY ---
     private final Consumer<String> statusCallback = this::updateVnpayStatus;
 
-    // Phương thức cho nút "Bàn làm việc"
-    @FXML
-    private void showTableView() {
-        try {
-            // Tải file FXML quản lý bàn
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("Table_manager.fxml"));
-            Node tableView = loader.load();
-            // Lấy controller của Table_manager.fxml
-            TableManagerController tableManagerController = loader.getController();
-            // Đưa MainController (this) cho TableManagerController biết
-            tableManagerController.setMainController(this);
-            // Đặt giao diện quản lý bàn vào khu vực trung tâm của BorderPane
-            mainBorderPane.setCenter(tableView);
-        } catch (IOException e) {
-            e.printStackTrace();
-            // Hiển thị lỗi cho người dùng nếu cần
-        }
-    }
+    @FXML private Label tableNameLabel;
+    @FXML private Label tableStatusLabel;
+    @FXML private Label totalAmountLabel;
 
-    // Phương thức cho nút "Thực đơn" để quay lại
-    @FXML
-    private void showMenuView() {
-        if (menuView != null) {
-            mainBorderPane.setCenter(menuView);
-        }
-    }
+    @FXML private Pagination tablePagination;
+
+    // === BIẾN MỚI CHO POLLING BÀN ===
+    private ScheduledExecutorService tablePoller;
+    private final int POLLING_INTERVAL_SECONDS = 5; // Kiểm tra CSDL mỗi 5 giây
 
     public void loadOrderForTable(int tableId) {
         // 1. Tìm đơn hàng đang hoạt động (PENDING/SERVED) của bàn
@@ -140,7 +122,7 @@ public class MainController {
         calculateChangeDue();
 
         // 5. Tự động chuyển về giao diện thực đơn/thanh toán
-        showMenuView();
+//        showMenuView();
 
         System.out.println("✅ Đã tải đơn hàng " + order.getId() + " của bàn " + tableId + " vào giỏ hàng.");
     }
@@ -339,7 +321,7 @@ public class MainController {
         cartTable.getColumns().addAll(sttCol, imageCol, nameCol, priceCol, quantityCol, totalCol);
         // === HẾT CẤU HÌNH CỘT GIỎ HÀNG ===
 
-        loadMeals("All");
+
 
         // === KHỞI TẠO POLLING SERVICE (VNPAY) ===
         // === KHỞI TẠO POLLING SERVICE (VNPAY) ===
@@ -408,9 +390,83 @@ public class MainController {
         updateCartSummary();
         calculateChangeDue();
 
-        if (this.mainBorderPane != null) {
-            this.menuView = this.mainBorderPane.getCenter();
+        // 1. Khởi tạo bộ hẹn giờ
+        tablePoller = Executors.newSingleThreadScheduledExecutor();
+
+        // 2. Tạo một TÁC VỤ (task) để chạy lặp lại
+        Runnable pollTask = () -> {
+            try {
+                // Lấy dữ liệu MỚI NHẤT từ CSDL
+                List<Table> freshTables = tableDAO.getAllTables();
+
+                // Cập nhật giao diện trên luồng JavaFX chính
+                Platform.runLater(() -> {
+                    // Cập nhật danh sách bàn
+                    this.allTablesList = freshTables;
+
+                    // Vẽ lại giao diện Pagination với dữ liệu mới
+                    refreshPaginationView();
+                });
+
+            } catch (Exception e) {
+                System.err.println("Lỗi khi polling trạng thái bàn: " + e.getMessage());
+                e.printStackTrace();
+            }
+        };
+
+        // 3. Bắt đầu hẹn giờ: Chạy pollTask sau 0 giây, và lặp lại
+        // mỗi 5 giây (POLLING_INTERVAL_SECONDS)
+        tablePoller.scheduleAtFixedRate(pollTask, 0, POLLING_INTERVAL_SECONDS, TimeUnit.SECONDS);
+
+    }
+
+    private void refreshPaginationView() {
+        if (allTablesList == null || allTablesList.isEmpty()) {
+            tablePagination.setPageCount(1);
+            tablePagination.setPageFactory(pageIndex -> new Label("Không tìm thấy bàn nào."));
+            return;
         }
+
+        // 1. Tính toán lại số lượng trang
+        int pageCount = (int) Math.ceil((double) allTablesList.size() / tablesPerPage);
+
+        // Lấy trang hiện tại để tránh bị reset về trang 1
+        int currentPage = tablePagination.getCurrentPageIndex();
+
+        tablePagination.setPageCount(pageCount);
+
+        // 2. "Dạy" (lại) cho Pagination cách tạo trang
+        tablePagination.setPageFactory(this::createTablePage); // Tái sử dụng hàm createTablePage
+
+        // 3. Đặt lại về trang hiện tại (nếu trang đó còn tồn tại)
+        if (currentPage < pageCount) {
+            tablePagination.setCurrentPageIndex(currentPage);
+        }
+    }
+
+
+    private Node createTablePage(int pageIndex) {
+        // 1. Tạo một TilePane mới cho mỗi trang
+        TilePane pageGrid = new TilePane();
+        pageGrid.setHgap(15);
+        pageGrid.setVgap(15);
+        pageGrid.setPadding(new Insets(15));
+
+        // 2. Tính toán vị trí bàn
+        int fromIndex = pageIndex * tablesPerPage;
+        int toIndex = Math.min(fromIndex + tablesPerPage, allTablesList.size());
+
+        // 3. Lấy danh sách con
+        if (allTablesList == null) return pageGrid; // DÒNG BẢO VỆ MỚI
+        List<Table> tablesForPage = allTablesList.subList(fromIndex, toIndex);
+
+        // 4. Tạo thẻ VBox cho từng bàn
+        for (Table table : tablesForPage) {
+            pageGrid.getChildren().add(createTableCard(table));
+        }
+
+        // 5. (ĐÃ SỬA) Trả về TRỰC TIẾP TilePane
+        return pageGrid; // Trả về TilePane (không bọc trong ScrollPane)
     }
 
     // --- HÀM XỬ LÝ THANH TOÁN VNPAY ---
@@ -654,127 +710,19 @@ public class MainController {
 
     // --- CÁC HÀM XỬ LÝ ỨNG DỤNG KHÁC (GIỮ NGUYÊN) ---
 
-    @FXML
-    public void reloadMeals() {
-        loadMeals("All");
-    }
-
-    private void loadMeals(String categoryName) {
-        System.out.println("🟡 loadMeals() called for category: " + categoryName);
-        if (menuGrid == null) return;
-        menuGrid.getChildren().clear();
-
-        new Thread(() -> {
-//            List<Meal> meals = mealDao.getAllMeals();
-            List<Meal> meals = mealDao.getMealsByCategory(categoryName);
-
-            Platform.runLater(() -> {
-                for (Meal meal : meals) {
-                    menuGrid.getChildren().add(createMealCard(meal));
-                }
-                if (meals.isEmpty()) {
-                    menuGrid.getChildren().add(new Label("Không tìm thấy món ăn trong danh mục này."));
-                }
-            });
-        }).start();
-    }
-
-    private void addToCart(Meal meal) {
-        if (cartTable == null) return;
-
-        ObservableList<OrderItem> items = cartTable.getItems();
-        if (items == null) {
-            items = FXCollections.observableArrayList();
-            cartTable.setItems(items);
-        }
-
-        boolean found = false;
-
-        // 1. Kiểm tra xem món ăn đã có trong giỏ chưa (SỬ DỤNG ID để so sánh)
-        for (OrderItem item : items) {
-            if (item.getMealId() == meal.getId()) {
-                item.setQuantity(item.getQuantity() + 1);
-                cartTable.refresh();
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            OrderItem newItem = new OrderItem(
-                    meal.getId(),
-                    meal.getName(),
-                    meal.getPrice(),
-                    1,
-                    meal.getImagePath()
-            );
-            items.add(newItem);
-        }
-
-        cartTable.scrollTo(items.size() - 1);
-        updateCartSummary();
-        calculateChangeDue();
-    }
+//    @FXML
+//    public void reloadMeals() {
+//        loadMeals("All");
+//    }
 
 
-    private VBox createMealCard(Meal meal) {
-        Image img;
-        try {
-            String path = meal.getImagePath().replace("\\", "/");
-            if (!path.startsWith("/")) path = "/" + path;
-
-            URL imageUrl = getClass().getResource("/com/organization/hr/pub_manager" + path);
-            if (imageUrl == null) {
-                imageUrl = getClass().getResource("/com/organization/hr/pub_manager/images/default.png");
-            }
-
-            img = new Image(imageUrl.toExternalForm());
-        } catch (Exception e) {
-            img = new Image(getClass().getResource("/com/organization/hr/pub_manager/images/default.png").toExternalForm());
-        }
 
 
-        ImageView imageView = new ImageView(img);
-        imageView.setFitWidth(80);
-        imageView.setFitHeight(80);
-        imageView.setPreserveRatio(true);
 
-        Label nameLabel = new Label(meal.getName());
-        Label priceLabel = new Label(String.format("%,.0fđ", meal.getPrice()));
-        priceLabel.getStyleClass().add("price");
 
-        VBox box = new VBox(8, imageView, nameLabel, priceLabel);
-        box.setAlignment(Pos.CENTER);
-        box.getStyleClass().add("menu-item");
 
-        box.setOnMouseClicked(e -> {
-            if (e.getButton() == MouseButton.PRIMARY) {
-                addToCart(meal);
-            } else if (e.getButton() == MouseButton.SECONDARY) {
-                changeMealImage(meal);
-            }
-        });
 
-        return box;
-    }
 
-    private void changeMealImage(Meal meal) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Chọn ảnh cho món: " + meal.getName());
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Ảnh PNG/JPG", "*.png", "*.jpg", "*.jpeg")
-        );
-        File file = fileChooser.showOpenDialog(new Stage());
-        if (file != null) {
-            // mealDao.updateMealImage(meal.getId(), file.getAbsolutePath());
-            reloadMeals();
-
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setHeaderText("✅ Cập nhật thành công!");
-            alert.setContentText("Ảnh món \"" + meal.getName() + "\" đã được thay đổi.");
-            alert.showAndWait();
-        }
-    }
 
     @FXML
     protected void onHelloButtonClick() {
@@ -783,12 +731,70 @@ public class MainController {
         }
     }
 
-    @FXML
-    private void handleCategorySelection(javafx.event.ActionEvent event) {
-        Button button = (Button) event.getSource();
-        String category = button.getText();
-        System.out.println("Đã chọn danh mục: " + category);
-         loadMeals(category); // Giữ lại logic gọi DAO lọc theo category nếu cần
 
+    // (GiHãy nguyên hàm createTableCard của bạn, nó đã tốt rồi)
+    private VBox createTableCard(Table table) {
+        VBox card = new VBox(5);
+        card.setAlignment(Pos.CENTER);
+        card.getStyleClass().add("menu-item");
+        card.setPrefSize(120, 100);
+
+        Label nameLabel = new Label(table.getName());
+        nameLabel.setStyle("-fx-font-weight: bold;");
+        Label statusLabel = new Label(table.getStatus());
+
+        switch (table.getStatus()) {
+            case "Trống":
+                card.setStyle("-fx-background-color: #c8e6c9; -fx-background-radius: 12;");
+                break;
+            case "Có khách":
+                card.setStyle("-fx-background-color: #ffcdd2; -fx-background-radius: 12;");
+                break;
+            case "Đã đặt":
+                card.setStyle("-fx-background-color: #bbdefb; -fx-background-radius: 12;");
+                break;
+            default:
+                card.setStyle("-fx-background-color: #e0e0e0; -fx-background-radius: 12;");
+                break;
+        }
+
+        card.getChildren().addAll(nameLabel, statusLabel);
+
+        card.setOnMouseClicked(event -> {
+            showTableDetails(table); // (Giữ nguyên)
+        });
+
+        return card;
+    }
+
+    // === SỬA ĐỔI PHƯƠNG THỨC NÀY ===
+    // 7. Sửa lại hàm showTableDetails (PHIÊN BẢN HOÀN CHỈNH)
+    private void showTableDetails(Table table) {
+        // 1. Luôn cập nhật thông tin chi tiết của bàn
+        tableNameLabel.setText(table.getName());
+        tableStatusLabel.setText("Trạng thái: " + table.getStatus());
+
+        // 2. Lấy đơn hàng đang hoạt động (PENDING hoặc SERVED)
+        Order order = orderDAO.getActiveOrderByTableId(table.getId());
+
+        // 3. Xử lý logic dựa trên trạng thái
+        if (table.getStatus().equals("Có khách") && order != null) {
+            // TRƯỜNG HỢP 1: Bàn "Có khách" VÀ có đơn hàng
+            // -> Tải đơn hàng vào giỏ hàng
+            totalAmountLabel.setText(String.format("%,.0fđ", order.getTotalAmount()));
+            loadOrderForTable(table.getId()); // Tải món ăn
+
+        } else if (order != null) {
+            // TRƯỜNG HỢP 2: Bàn "Đã đặt" (hoặc trạng thái khác) VÀ có đơn hàng
+            // -> Chỉ hiển thị tổng tiền, KHÔNG tải vào giỏ hàng
+            totalAmountLabel.setText(String.format("%,.0fđ", order.getTotalAmount()));
+            clearCart(); // Xóa giỏ hàng cũ
+
+        } else {
+            // TRƯỜNG HỢP 3: Bàn "Trống" (hoặc không có đơn hàng)
+            // -> Xóa giỏ hàng và reset tổng tiền
+            totalAmountLabel.setText("0đ");
+            clearCart();
+        }
     }
 }
