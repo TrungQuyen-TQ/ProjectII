@@ -22,6 +22,14 @@ public class HelloApplication extends Application {
         stage.show();
     }
 
+    @Override
+    public void stop() {
+        System.out.println("Đang đóng ứng dụng và dừng các dịch vụ...");
+        // System.exit(0) là cách dứt khoát nhất để tắt
+        // máy ảo Java (JVM) và tất cả các luồng của nó.
+        System.exit(0);
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
