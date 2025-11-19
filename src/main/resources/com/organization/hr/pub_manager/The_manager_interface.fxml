@@ -25,20 +25,20 @@
                 <Pagination fx:id="tablePagination" styleClass="table-pagination" />
             </center>
             <right>
-                <VBox prefWidth="250" spacing="10" style="-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-border-width: 0 0 0 1;">
-                    <padding>
-                        <Insets top="10" right="10" bottom="10" left="10" />
-                    </padding>
-                    <Label text="Thông tin bàn">
-                        <font>
-                            <Font name="System Bold" size="18.0" />
-                        </font>
-                    </Label>
-                    <Label fx:id="tableNameLabel" text="Chưa chọn bàn" />
-                    <Label fx:id="tableStatusLabel" text="Trạng thái: " />
-<!--                    <Label text="Tổng tiền:" />-->
-<!--                    <Label fx:id="totalAmountLabel" style="-fx-font-weight: bold;" text="0đ" />-->
-                </VBox>
+<!--                <VBox prefWidth="250" spacing="10" style="-fx-background-color: #f0f0f0; -fx-border-color: #ccc; -fx-border-width: 0 0 0 1;">-->
+<!--                    <padding>-->
+<!--                        <Insets top="10" right="10" bottom="10" left="10" />-->
+<!--                    </padding>-->
+<!--                    <Label text="Thông tin bàn">-->
+<!--                        <font>-->
+<!--                            <Font name="System Bold" size="18.0" />-->
+<!--                        </font>-->
+<!--                    </Label>-->
+<!--                    <Label fx:id="tableNameLabel" text="Chưa chọn bàn" />-->
+<!--                    <Label fx:id="tableStatusLabel" text="Trạng thái: " />-->
+<!--&lt;!&ndash;                    <Label text="Tổng tiền:" />&ndash;&gt;-->
+<!--&lt;!&ndash;                    <Label fx:id="totalAmountLabel" style="-fx-font-weight: bold;" text="0đ" />&ndash;&gt;-->
+<!--                </VBox>-->
             </right>
         </BorderPane>
     </center>
