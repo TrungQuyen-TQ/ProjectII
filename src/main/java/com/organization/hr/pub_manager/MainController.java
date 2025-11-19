@@ -47,6 +47,8 @@ public class MainController {
 //    private Node menuView;
 
     private final OrderDAO orderDAO = new OrderDAO();
+    private final TableDAO tableDAO = new TableDAO(); // DAO để cập nhật bàn
+    private PaymentService paymentService;
 
     private PaymentPopupController popupController;
 
@@ -72,14 +74,17 @@ public class MainController {
 
     // --- DỊCH VỤ VÀ POLLING ---
     private final MealDAO mealDao = new MealDAO();
-    private final TableDAO tableDAO = new TableDAO(); // DAO để cập nhật bàn
+
     private int currentTableId = -1;
+
 
     private List<Table> allTablesList; // Lưu trữ TẤT CẢ các bàn
     private final int tablesPerPage = 20; // Đặt số bàn mỗi trang (bạn có thể đổi số 20)
 
     private final VnpayService vnpayService = new VnpayService();
     private PollingService pollingService;
+
+
 
     // --- CALLBACK & DỊCH VỤ VNPAY ---
     private final Consumer<String> statusCallback = this::updateVnpayStatus;
@@ -134,11 +139,7 @@ public class MainController {
                     // === THÊM KHỐI NÀY (TRƯỚC KHI CLEARCART) ===
                     if (this.currentTableId > 0) {
 
-                        // [THAY ĐỔI] Gọi hàm thanh toán TẤT CẢ đơn hàng của bàn
-                        orderDAO.payAllActiveOrders(currentTableId, "PAID");
-
-                        // [THAY ĐỔI] Cập nhật trạng thái bàn về Trống
-                        tableDAO.updateTableStatus(currentTableId, "Trống");
+                        paymentService.completeTransaction(currentTableId);
 
                         System.out.println("✅ Đã thanh toán gộp cho bàn: " + currentTableId);
                     }
@@ -316,6 +317,8 @@ public class MainController {
         // Luôn khởi tạo PollingService vì nó cần thiết cho chức năng thanh toán popup
         this.pollingService = new PollingService(vnpayService, statusCallback);
 
+        this.paymentService = new PaymentService(orderDAO, tableDAO);
+
         // Chỉ cập nhật statusLabel trên giao diện chính nếu nó tồn tại
         if (statusLabel != null) {
             statusLabel.setText("Sẵn sàng thanh toán.");
@@ -433,7 +436,6 @@ public class MainController {
             tablePagination.setCurrentPageIndex(currentPage);
         }
     }
-
 
     private Node createTablePage(int pageIndex) {
         // 1. Tạo một TilePane mới cho mỗi trang
@@ -659,11 +661,7 @@ public class MainController {
         // === THÊM KHỐI NÀY (TRƯỚC KHI BÁO THÀNH CÔNG) ===
         if (this.currentTableId > 0) {
 
-            // [THAY ĐỔI] Gọi hàm thanh toán TẤT CẢ đơn hàng của bàn
-            orderDAO.payAllActiveOrders(currentTableId, "PAID");
-
-            // [THAY ĐỔI] Cập nhật trạng thái bàn về Trống
-            tableDAO.updateTableStatus(currentTableId, "Trống");
+            paymentService.completeTransaction(currentTableId);
 
             System.out.println("✅ Đã thanh toán gộp cho bàn: " + currentTableId);
         }
@@ -756,8 +754,8 @@ public class MainController {
     // 7. Sửa lại hàm showTableDetails (PHIÊN BẢN HOÀN CHỈNH)
     private void showTableDetails(Table table) {
         // 1. Luôn cập nhật thông tin chi tiết của bàn
-        tableNameLabel.setText(table.getName());
-        tableStatusLabel.setText("Trạng thái: " + table.getStatus());
+//        tableNameLabel.setText(table.getName());
+//        tableStatusLabel.setText("Trạng thái: " + table.getStatus());
 
         // 2. Lấy đơn hàng đang hoạt động (PENDING hoặc SERVED)
         Order order = orderDAO.getActiveOrderByTableId(table.getId());
