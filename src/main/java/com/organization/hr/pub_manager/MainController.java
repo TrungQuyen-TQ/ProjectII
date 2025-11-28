@@ -443,6 +443,7 @@ public class MainController {
         pageGrid.setHgap(15);
         pageGrid.setVgap(15);
         pageGrid.setPadding(new Insets(15));
+        pageGrid.setTileAlignment(Pos.CENTER_LEFT);
 
         // 2. Tính toán vị trí bàn
         int fromIndex = pageIndex * tablesPerPage;
@@ -720,7 +721,7 @@ public class MainController {
         VBox card = new VBox(5);
         card.setAlignment(Pos.CENTER);
         card.getStyleClass().add("menu-item");
-        card.setPrefSize(120, 100);
+        card.setPrefSize(200,150);
 
         Label nameLabel = new Label(table.getName());
         nameLabel.setStyle("-fx-font-weight: bold;");
